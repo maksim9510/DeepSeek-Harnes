@@ -102,4 +102,6 @@ export const ru = {
   onboardingSave: 'Сохранить и продолжить',
   onboardingSaving: 'Сохранение…',
   keyRequired: 'Введите API-ключ, чтобы продолжить.',
+  fetchSearch: 'Поиск',
+  fetchNoMatches: 'Ничего не найдено',
 } satisfies Record<LocaleNamespaceMap['settings.models'], string>
