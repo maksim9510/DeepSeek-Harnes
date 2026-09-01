@@ -1,0 +1,114 @@
+{
+  "extends": "../../../tsconfig.base.client.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib/types"
+  },
+  "include": [
+    "src"
+  ],
+  "references": [
+    {
+      "path": "../../../vendor/cordis"
+    },
+    {
+      "path": "../../client/locale"
+    },
+    {
+      "path": "../../client/ui-slots"
+    },
+    {
+      "path": "../../client/ui-agent-preset"
+    },
+    {
+      "path": "../../client/ui-approval"
+    },
+    {
+      "path": "../../client/ui-chat"
+    },
+    {
+      "path": "../../client/ui-commands"
+    },
+    {
+      "path": "../../client/ui-conversation"
+    },
+    {
+      "path": "../../client/ui-deliverables"
+    },
+    {
+      "path": "../../client/ui-directory-picker-browse"
+    },
+    {
+      "path": "../../client/ui-goal"
+    },
+    {
+      "path": "../../client/ui-input-trigger"
+    },
+    {
+      "path": "../../client/ui-jobs"
+    },
+    {
+      "path": "../../client/ui-message-feedback"
+    },
+    {
+      "path": "../../client/ui-model-selection"
+    },
+    {
+      "path": "../../client/ui-permission-presets"
+    },
+    {
+      "path": "../../client/ui-plan"
+    },
+    {
+      "path": "../../client/ui-reference"
+    },
+    {
+      "path": "../../client/ui-schedule"
+    },
+    {
+      "path": "../../client/ui-settings-general"
+    },
+    {
+      "path": "../../client/ui-settings-models"
+    },
+    {
+      "path": "../../client/ui-settings-plugin-inventory"
+    },
+    {
+      "path": "../../client/ui-settings-plugins"
+    },
+    {
+      "path": "../../client/ui-sidebar"
+    },
+    {
+      "path": "../../client/ui-skill"
+    },
+    {
+      "path": "../../client/ui-subagent"
+    },
+    {
+      "path": "../../client/ui-theme"
+    },
+    {
+      "path": "../../client/ui-trajectory"
+    },
+    {
+      "path": "../../client/ui-user-questions"
+    },
+    {
+      "path": "../../client/ui-workflow-run"
+    },
+    {
+      "path": "../../client/ui-workspace"
+    },
+    {
+      "path": "../../session-query/session-log-export/tsconfig.client.json"
+    },
+    {
+      "path": "../ui-cordis"
+    },
+    {
+      "path": "../../runtime-diagnostics/invariants"
+    }
+  ]
+}

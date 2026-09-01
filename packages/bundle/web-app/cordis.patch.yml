@@ -175,6 +175,11 @@
     - id: locale
       name: '@deepseek-ai/dsh-client-locale'
 
+    # Russian language pack: the selectable Русский definition and one ru
+    # dictionary per covered namespace. Remove this row to drop the language.
+    - id: locale-ru
+      name: '@deepseek-ai/dsh-client-locale-ru'
+
     - id: ui-layout
       name: '@deepseek-ai/dsh-client-ui-layout'
 

@@ -1,0 +1,47 @@
+/** ru dictionary for the `common` namespace: cross-feature standard words. */
+
+import type {} from '@deepseek-ai/dsh-client-locale/client'
+import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
+
+/** Russian dictionary, checked complete against the common namespace key union. */
+export const ru = {
+  'ok': 'ОК',
+  'cancel': 'Отмена',
+  'close': 'Закрыть',
+  'copy': 'Копировать',
+  'copied': 'Скопировано',
+  'copy.failed': 'Не удалось скопировать',
+  'copy.value': 'Копировать значение',
+  'copy.json': 'Копировать JSON',
+  'copy.path': 'Копировать путь свойства',
+  'copy.prettyJson': 'Копировать форматированный JSON',
+  'copy.compactJson': 'Копировать компактный JSON',
+  'copy.optionsHint': '{action}; щёлкните правой кнопкой мыши для вариантов копирования',
+  'retry': 'Повторить',
+  'loading': 'Загрузка…',
+  'load.failed': 'Не удалось загрузить',
+  'submit': 'Отправить',
+  'submitting': 'Отправка…',
+  'next': 'Далее',
+  'previous': 'Назад',
+  'skip': 'Пропустить',
+  'delete': 'Удалить',
+  'edit': 'Изменить',
+  'save': 'Сохранить',
+  'search': 'Поиск',
+  'more': 'Ещё',
+  'collapse': 'Свернуть',
+  'expand': 'Развернуть',
+  'back': 'Вернуться',
+  'brand.localBuild': 'DSH — локальная сборка',
+  'unknown': 'Неизвестно',
+  'none': 'Нет',
+  'truncated': 'Усечено',
+  'json.collapseNode': 'Свернуть узел JSON',
+  'json.expandNode': 'Развернуть узел JSON',
+  'json.label': 'JSON',
+  'markdown.footnotes': 'Сноски',
+  'markdown.truncatedCharacters': '… усечено, всего {total} символов',
+  'number.thousand': '{value}K',
+  'number.million': '{value}M',
+} satisfies Record<LocaleNamespaceMap['common'], string>

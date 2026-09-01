@@ -1,0 +1,45 @@
+/** ru dictionary for the `subagent` namespace: the subagent catalog, lineage header, and read-only composer. */
+
+import type {} from '@deepseek-ai/dsh-client-ui-subagent/client'
+import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
+
+/** Russian dictionary, checked complete against the subagent namespace key union. */
+export const ru = {
+  'diagnostic.corrupt': 'Запись сессии повреждена',
+  'diagnostic.unsupported': 'Неподдерживаемая версия записи субагента',
+  'diagnostic.unavailable': 'Запись сессии временно недоступна',
+  'duration.seconds': '{seconds} с',
+  'duration.minutes': '{minutes} мин {seconds} с',
+  'duration.hours': '{hours} ч {minutes} мин {seconds} с',
+  'duration.days': '{days} д',
+  'duration.daysHours': '{days} д {hours} ч',
+  'duration.months': '~{months} мес',
+  'duration.monthsDays': '~{months} мес {days} д',
+  'duration.years': '~{years} г',
+  'duration.yearsMonths': '~{years} г {months} мес',
+  'duration.exactDays': '{days} д {hours} ч {minutes} мин {seconds} с',
+  'duration.exactTitle': 'Общая активная длительность: {duration}',
+  'tokens.thousand': '{value}K',
+  'tokens.million': '{value}M',
+  'tokens.total': '{value} токенов',
+  'loading.label': 'Загрузка субагентов…',
+  'loading.aria': 'Загрузка субагентов',
+  'load.error': 'Не удалось загрузить субагентов',
+  'retry': 'Повторить',
+  'mode.oneShot': 'одноразовый',
+  'mode.continuable': 'с продолжением',
+  'activity.running': 'выполняется',
+  'activity.inactive': 'не выполняется',
+  'branch.collapse': 'Свернуть вложенные субагенты {label}',
+  'branch.expand': 'Развернуть вложенные субагенты {label}',
+  'count.total.one': 'Субагентов: {count}',
+  'count.total.other': 'Субагентов: {count}',
+  'count.running.one': 'Выполняется субагентов: {count}',
+  'count.running.other': 'Выполняется субагентов: {count}',
+  'switcher.aria': 'Переключить субагента: {title}',
+  'tree.aria': 'Сессии субагентов',
+  'readonly.oneShot.title': 'Запись одноразового субагента',
+  'readonly.title': 'Этот субагент пока доступен только для чтения',
+  'readonly.oneShot.body': 'Одноразовые задачи не принимают последующих сообщений; здесь можно просмотреть полную запись выполнения.',
+  'readonly.body': 'Родительская сессия не в сети; откройте её заново, чтобы продолжить отправку сообщений.',
+} satisfies Record<LocaleNamespaceMap['subagent'], string>
