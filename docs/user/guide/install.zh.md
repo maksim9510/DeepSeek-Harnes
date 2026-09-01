@@ -48,3 +48,15 @@ Astra Linux 基于 Debian，但其自带的 npm 比项目工具链需要的版�
 - 比固定版本更旧的 pnpm：Corepack 激活固定的 pnpm。
 - 与 `pnpm-workspace.yaml` 不同步的锁文件：使用 `pnpm install --no-frozen-lockfile --lockfile-only` 重新生成锁文件。
 - 缺失的发行版软件包：通过系统软件包管理器安装。
+
+## 与上游同步
+
+[`DeepSeek-sync.py`](../../../DeepSeek-sync.py) 将上游仓库（`deepseek-ai/deepseek-harness`）的新提交合并到 fork，并在一切通过后把 `master` 推送到 fork 的 `main`：
+
+```sh
+python3 DeepSeek-sync.py
+```
+
+同步通过合并前后的标记审计保护 fork 的本地工作——俄语 README、俄语 Web 本地化、安装脚本和锁文件修复。它自动修复可以安全决定的问题：合并造成的锁文件漂移，以及上游新增或删除的 ru 词典键（从 typecheck 输出解析，最多三轮修复，翻译来自内置表并以英文原文作为后备）。它在推送之前用 `pnpm install --frozen-lockfile` 和 `pnpm run typecheck` 验证结果。
+
+任何需要决策的问题都会使同步以退出码 1 停止，先把合并回滚到合并前提交，并写入 `sync-needs-human.txt`，其中包含确切的恢复命令。每日 02:00 的定时运行通过 `/etc/cron.d/deepseek-sync` 安装，并把输出追加到仓库根目录的 `sync.log`。

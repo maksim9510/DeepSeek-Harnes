@@ -22,6 +22,10 @@ Status: implemented
 
 doctor 报告可以 JSON 形式输出（`doctor --json`）以便脚本使用。Web UI 启动使用 Corepack 解析的 pnpm（`corepack pnpm`），因此旧的全局 shim 永远不会破坏构建。
 
+## 决定：上游同步
+
+仓库还随附 `DeepSeek-sync.py`，它把 `origin/master` 合并到 fork 的 `master` 并推送到 fork 的 `main`。fork 的本地工作（俄语 README、俄语 Web 本地化、安装脚本、锁文件修复）通过合并前后运行的标记审计保护；审计失败的合并结果会回滚到合并前提交，且绝不推送。同步自动修复可以安全决定的问题——锁文件漂移，以及上游新增或删除的 ru 词典键，从 typecheck 输出解析，最多三轮修复，翻译来自内置表并以英文原文作为后备——并以 `pnpm install --frozen-lockfile` 加 `pnpm run typecheck` 作为推送门槛。脚本无法决定的问题会使其以退出码 1 停止，并写入带有确切恢复命令的 `sync-needs-human.txt` 报告。每日 02:00 的定时运行为 `/etc/cron.d/deepseek-sync`，输出追加到 `sync.log`。
+
 ## 备选方案
 
 **Bash 安装脚本。** 被拒绝：旧的 `scripts/install.sh` 之所以被移除，是因为托管安装器的生命周期与软件包管理器的生命周期重复，而且新的 Bash 安装脚本无法在 Windows 上运行。

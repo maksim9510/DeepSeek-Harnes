@@ -48,3 +48,15 @@ Astra Linux is Debian-based but ships an npm older than the project toolchain ne
 - A pnpm older than the pinned version: Corepack activates the pinned pnpm.
 - A lockfile out of sync with `pnpm-workspace.yaml`: the lockfile is regenerated with `pnpm install --no-frozen-lockfile --lockfile-only`.
 - Missing distro packages: they are installed through the system package manager.
+
+## Synchronize with upstream
+
+[`DeepSeek-sync.py`](../../../DeepSeek-sync.py) merges new commits from the upstream repository (`deepseek-ai/deepseek-harness`) into the fork and pushes `master` to the fork's `main` when everything passes:
+
+```sh
+python3 DeepSeek-sync.py
+```
+
+The sync protects the fork's local work — the Russian README, the Russian web localization, the installer, and the lockfile fix — through a marker audit before and after the merge. It auto-repairs what it can decide safely: a lockfile drifted by the merge, and ru dictionary keys added or removed by upstream (parsed from the typecheck output, up to three repair rounds, with translations from its built-in table and the upstream English text as fallback). It verifies the result with `pnpm install --frozen-lockfile` and `pnpm run typecheck` before pushing.
+
+Anything that needs a decision stops the sync with exit code 1, rolls the merge back to the pre-merge commit, and writes `sync-needs-human.txt` with the exact recovery commands. A daily run at 02:00 is installed through `/etc/cron.d/deepseek-sync` and appends its output to `sync.log` in the repository root.

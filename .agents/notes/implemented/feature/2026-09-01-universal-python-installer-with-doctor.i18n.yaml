@@ -2,5 +2,5 @@
 # side as of the last confirmed-consistent state. Both languages carry equal authority;
 # after editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-01-universal-python-installer-with-doctor.md
-2026-09-01-universal-python-installer-with-doctor.md: b4e8a62f8631feb6361eea758031432e67ab2265
-2026-09-01-universal-python-installer-with-doctor.zh.md: 52e9bc7fd1a506966f2e932d617e1bb99bc2cdf8
+2026-09-01-universal-python-installer-with-doctor.md: 77baf26ead569637d35ea184d090d79561f935c5
+2026-09-01-universal-python-installer-with-doctor.zh.md: 857f5607a1f64a4d30f81621d53c784217f286d9

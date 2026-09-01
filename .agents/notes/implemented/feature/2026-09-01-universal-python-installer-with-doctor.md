@@ -22,6 +22,10 @@ On Astra Linux the doctor detects the distro npm older than the npm baseline bun
 
 The doctor report is available as JSON (`doctor --json`) for scripting. The Web UI launch uses the Corepack-resolved pnpm (`corepack pnpm`) so an old global shim never breaks the build.
 
+## Decision: upstream synchronization
+
+The repository also ships `DeepSeek-sync.py`, which merges `origin/master` into the fork's `master` and pushes to the fork's `main`. The fork's local work (Russian README, ru web localization, the installer, the lockfile fix) is protected through a marker audit run before and after the merge; a merge whose result fails the audit is rolled back to the pre-merge commit and never pushed. The sync auto-repairs what it can decide safely — lockfile drift and ru dictionary keys added or removed by upstream, parsed from the typecheck output over up to three repair rounds, with translations from a built-in table and the upstream English text as fallback — and gates the push on `pnpm install --frozen-lockfile` plus `pnpm run typecheck`. A problem the script cannot decide stops it with exit 1 and a `sync-needs-human.txt` report carrying the exact recovery commands. A daily run at 02:00 is installed as `/etc/cron.d/deepseek-sync` and appends to `sync.log`.
+
 ## Alternatives considered
 
 **Bash installer.** Rejected: the old `scripts/install.sh` was removed because the managed-installer lifecycle duplicated the package-manager lifecycle, and a new Bash installer would not run on Windows.
