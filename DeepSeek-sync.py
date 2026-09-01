@@ -203,20 +203,25 @@ def _pnpm_command() -> List[str]:
 
 
 def _yaml_top_keys(path: Path) -> set:
-    keys: set = set()
     try:
-        for line in path.read_text(encoding="utf-8").splitlines():
-            stripped = line.strip()
-            if not stripped or stripped.startswith(("#", "%", "---", "...")):
-                continue
-            if line[:1].isspace():
-                continue
-            if stripped.endswith(":") or ": " in stripped or ":" in stripped.split(" #")[0]:
-                key = stripped.split(":", 1)[0].strip()
-                if key:
-                    keys.add(key)
+        text = path.read_text(encoding="utf-8")
     except OSError:
-        pass
+        return set()
+    return _yaml_top_keys_text(text)
+
+
+def _yaml_top_keys_text(text: str) -> set:
+    keys: set = set()
+    for line in text.splitlines():
+        stripped = line.strip()
+        if not stripped or stripped.startswith(("#", "%", "---", "...")):
+            continue
+        if line[:1].isspace():
+            continue
+        if stripped.endswith(":") or ": " in stripped or ":" in stripped.split(" #")[0]:
+            key = stripped.split(":", 1)[0].strip()
+            if key:
+                keys.add(key)
     return keys
 
 
@@ -272,6 +277,35 @@ def ensure_clean_tree() -> Optional[str]:
     if branch != LOCAL_BRANCH:
         return f"Синхронизация идёт только из ветки {LOCAL_BRANCH}, сейчас: {branch}"
     return None
+
+
+def restore_drifted_lockfile() -> bool:
+    """Restore a lockfile that a global pnpm older than the pin rewrote.
+
+    pnpm older than 10 does not read ``overrides``/``patchedDependencies``
+    from ``pnpm-workspace.yaml``, so a bare ``pnpm install`` rewrites the
+    lockfile without those sections and the next frozen install aborts.
+    The lockfile is derived data: when it is the only dirty tracked file
+    and the copy in HEAD is consistent with the workspace config, the
+    working-tree copy is restored from HEAD.  Anything else stays for the
+    human, per the clean-tree report.
+    """
+    code, out = run_capture(["git", "status", "--porcelain", "--untracked-files=no"])
+    dirty = [line for line in out.strip().splitlines() if line.strip()]
+    if " M pnpm-lock.yaml" not in dirty or not lockfile_mismatch():
+        return False
+    rc, head_text = run_capture(["git", "show", "HEAD:pnpm-lock.yaml"])
+    if rc != 0 or not head_text:
+        return False
+    sections = ("overrides", "patchedDependencies")
+    ws_keys = _yaml_top_keys(REPO_ROOT / "pnpm-workspace.yaml")
+    head_keys = _yaml_top_keys_text(head_text)
+    if [k for k in sections if k in head_keys] != [k for k in sections if k in ws_keys]:
+        return False
+    run(["git", "restore", "pnpm-lock.yaml"])
+    log_ok("pnpm-lock.yaml был перезаписан глобальным pnpm старее закреплённой версии;"
+           " восстановлен из HEAD (используйте `corepack pnpm` вместо голого `pnpm`)")
+    return True
 
 
 def fetch_remotes() -> Optional[str]:
@@ -556,6 +590,8 @@ def main(argv: List[str]) -> int:
 def _sync() -> int:
     log(f"DeepSeek Harness upstream sync v{__version__}")
     HUMAN_REPORT.unlink(missing_ok=True)  # only the latest run's report stays
+
+    restore_drifted_lockfile()
 
     problem = ensure_clean_tree()
     if problem:
