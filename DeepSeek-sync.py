@@ -366,15 +366,23 @@ def ensure_pnpm_shim() -> Optional[str]:
     fix_code, fix_out = run_capture(
         ["corepack", "enable", "pnpm", "--install-directory", os.path.dirname(path)]
     )
-    if fix_code == 0:
-        log_ok(f"pnpm теперь резолвится через Corepack (pin {pin_text})")
-        return None
-    log_fail(f"corepack enable pnpm не удался: {fix_out.strip()[:160]}")
-    return (
-        f"Голый pnpm {version_text} в {path} отличается от закреплённого {pin_text}, и автоматическая"
-        " перепривязка не удалась (каталог принадлежит root).\n"
-        f"  Команда: sudo corepack enable pnpm --install-directory {os.path.dirname(path)}"
+    if fix_code != 0:
+        log_fail(f"corepack enable pnpm не удался: {fix_out.strip()[:160]}")
+        return (
+            f"Голый pnpm {version_text} в {path} отличается от закреплённого {pin_text}, и автоматическая"
+            " перепривязка не удалась (каталог принадлежит root).\n"
+            f"  Команда: sudo corepack enable pnpm --install-directory {os.path.dirname(path)}"
+        )
+    # Pre-download the pinned version so the first pnpm call does not need
+    # the network and bare `pnpm` outside the repo resolves to the pin too.
+    prep_code, prep_out = run_capture(
+        ["corepack", "prepare", f"pnpm@{pin_text}", "--activate"],
+        env={"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"},
     )
+    if prep_code != 0:
+        log_warn(f"corepack prepare pnpm@{pin_text} не удался ({prep_out.strip()[:120]}); версия скачается при первом вызове")
+    log_ok(f"pnpm теперь резолвится через Corepack (pin {pin_text})")
+    return None
 
 
 def fetch_remotes() -> Optional[str]:

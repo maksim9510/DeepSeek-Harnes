@@ -10,12 +10,13 @@ Status: implemented
 
 ## 决定
 
-仓库随附一个通用安装脚本，即仓库根目录下的单个仅标准库 Python 3 脚本 `DeepSeek-install.py`，支持 Ubuntu、Debian、Arch Linux、Astra Linux 和 Windows。它把仓库克隆到 `~/.dsh/source`，运行 `pnpm install` 和 `pnpm run build`，创建空的 `.env`，并打印启动命令。安装以非交互方式运行，从不执行 `curl | sh` 安装器；系统软件包只通过发行版软件包管理器安装。
+仓库随附一个通用安装脚本，即仓库根目录下的单个仅标准库 Python 3 脚本 `DeepSeek-install.py`，支持 Ubuntu、Debian、Arch Linux、Astra Linux 和 Windows。它会搭建 pnpm 工具链（通过 npm 安装 Corepack、通过 `corepack prepare` 安装固定版本的 pnpm、通过 `corepack enable` 创建裸 `pnpm` shim），把仓库克隆到 `~/.dsh/source`，运行 `pnpm install` 和 `pnpm run build`，创建空的 `.env`，并打印启动命令。安装以非交互方式运行，从不执行 `curl | sh` 安装器；系统软件包只通过发行版软件包管理器安装，且 install 的引导阶段将自动修复限制在 pnpm 工具链检查内。
 
 内置的 `doctor` 命令探测环境，并为每个问题报告确切的修复命令。使用 `--fix` 时，它自动应用安全的修复，并重新探测以确认每次修复都已生效：
 
-- pnpm 比固定版本更旧：Corepack 激活 `pnpm@11.7.0`；当 `corepack enable` 因根用户拥有的 bin 目录报 EACCES 时，会报告 `sudo corepack enable` 替代方案。
-- 版本与固定版本不同的裸 `pnpm` shim（低于 10 的独立 pnpm 不读取 workspace 的 `overrides`，会悄悄重写锁文件；更新的则拒绝在 Corepack 下切换到固定版本，使构建中的嵌套 `pnpm --filter …` 调用失败）：shim 被原地重新指向 Corepack，root 所有的目录会报告确切的 `sudo corepack enable pnpm --install-directory …` 命令。
+- 缺失的 Corepack 且 npm 可用：通过 `npm install -g corepack` 安装 Corepack；npm 也缺失时仍需重装 Node.js 的用户决策。
+- 与固定版本不同的 pnpm：`corepack prepare pnpm@11.7.0 --activate` 下载并激活固定的 pnpm。
+- 裸 `pnpm` shim 缺失或版本与固定版本不同（低于 10 的独立 pnpm 不读取 workspace 的 `overrides`，会悄悄重写锁文件；更新的则拒绝在 Corepack 下切换到固定版本，使构建中的嵌套 `pnpm --filter …` 调用失败）：shim 被创建或原地重新指向 Corepack，root 所有的目录会报告确切的 `sudo corepack enable pnpm` 命令。
 - 锁文件与 `pnpm-workspace.yaml` 不同步（pnpm 的 `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`）：使用 `pnpm install --no-frozen-lockfile --lockfile-only` 重新生成锁文件，重试一次。
 - 缺失的发行版软件包：按平台通过 `apt-get` / `pacman` / `winget` 安装。
 

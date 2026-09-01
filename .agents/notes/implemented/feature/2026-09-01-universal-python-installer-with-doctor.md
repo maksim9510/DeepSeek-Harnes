@@ -10,12 +10,13 @@ The repository has no installer: the earlier `scripts/install.sh` was removed by
 
 ## Decision
 
-The repository ships a universal installer as a single stdlib-only Python 3 script, `DeepSeek-install.py` at the repository root, covering Ubuntu, Debian, Arch Linux, Astra Linux, and Windows. It clones the repository into `~/.dsh/source`, runs `pnpm install` and `pnpm run build`, creates an empty `.env`, and prints the launch command. The install is non-interactive and never runs `curl | sh` installers; system packages are installed only through the distro package manager.
+The repository ships a universal installer as a single stdlib-only Python 3 script, `DeepSeek-install.py` at the repository root, covering Ubuntu, Debian, Arch Linux, Astra Linux, and Windows. It bootstraps the pnpm toolchain (Corepack through npm, the pinned pnpm through `corepack prepare`, the bare `pnpm` shim through `corepack enable`), clones the repository into `~/.dsh/source`, runs `pnpm install` and `pnpm run build`, creates an empty `.env`, and prints the launch command. The install is non-interactive and never runs `curl | sh` installers; system packages are installed only through the distro package manager, and install's bootstrap pass restricts auto-repair to the pnpm toolchain checks.
 
 A built-in `doctor` command probes the environment and reports each problem with the exact fix command. With `--fix` it applies the repairs that are safe to run automatically and re-probes to confirm each repair landed:
 
-- pnpm older than the pinned version: Corepack activates `pnpm@11.7.0`; `corepack enable` EACCES on a root-owned bin directory is reported with the `sudo corepack enable` alternative.
-- A bare `pnpm` shim whose version differs from the pinned one (a standalone pnpm older than 10 does not read the workspace `overrides` and silently rewrites the lockfile; a newer one refuses to switch to the pin under Corepack and fails the build's nested `pnpm --filter …` calls): the shim is repointed at Corepack in place, and a root-owned directory is reported with the exact `sudo corepack enable pnpm --install-directory …` command.
+- A missing Corepack with npm available: Corepack is installed through `npm install -g corepack`; a missing npm still needs the Node.js reinstall decision.
+- A pnpm version different from the pin: `corepack prepare pnpm@11.7.0 --activate` downloads and activates the pinned pnpm.
+- A bare `pnpm` shim missing or whose version differs from the pinned one (a standalone pnpm older than 10 does not read the workspace `overrides` and silently rewrites the lockfile; a newer one refuses to switch to the pin under Corepack and fails the build's nested `pnpm --filter …` calls): the shim is created or repointed at Corepack in place, and a root-owned directory is reported with the exact `sudo corepack enable pnpm` command.
 - A lockfile out of sync with `pnpm-workspace.yaml` (pnpm's `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`): the lockfile is regenerated with `pnpm install --no-frozen-lockfile --lockfile-only`, retried once.
 - Missing distro packages: installed through `apt-get` / `pacman` / `winget` per platform.
 

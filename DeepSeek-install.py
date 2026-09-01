@@ -364,10 +364,14 @@ class CheckResult:
 class Doctor:
     """Probe the environment and repair what can be repaired automatically."""
 
-    def __init__(self, platform_info: Platform, source_dir: Path, fix: bool):
+    def __init__(self, platform_info: Platform, source_dir: Path, fix: bool,
+                 fix_names: Optional[frozenset] = None):
         self.platform = platform_info
         self.source_dir = source_dir
         self.fix = fix
+        #: None lets every automatic fix run; a set restricts auto-repair to
+        #: the named checks (install bootstraps only the pnpm toolchain).
+        self.fix_names = fix_names
         self.results: List[CheckResult] = []
         self.auto_fixes_applied = 0
 
@@ -490,7 +494,10 @@ class Doctor:
                 probe=self.check_pnpm,
             )
         pinned = tuple(int(p) for p in PNPM_VERSION.split("."))
-        ok = version >= pinned
+        # Exactly the pin: a newer pnpm refuses to switch under Corepack and
+        # fails the build's nested pnpm calls, an older one rewrites the
+        # lockfile without the workspace overrides.
+        ok = version == pinned
         sudo_hint = (
             " If `corepack enable` fails with EACCES on a root-owned bin "
             "directory, run `sudo corepack enable` once, then re-run doctor."
@@ -500,7 +507,7 @@ class Doctor:
             ok,
             detail=f"pnpm {format_version_tuple(version)} via {source} (repo pins {PNPM_VERSION})",
             fix=(
-                f"Activate the pinned pnpm: "
+                f"Install and activate the pinned pnpm: "
                 f"`corepack enable && corepack prepare pnpm@{PNPM_VERSION} --activate`.{sudo_hint}"
             ),
             probe=self.check_pnpm,
@@ -515,14 +522,30 @@ class Doctor:
         newer it refuses to switch to the pinned version when a parent
         process already invoked pnpm through Corepack (the nested
         ``pnpm --filter …`` calls in `pnpm run build` fail with the
-        version-mismatch error).  The check passes when there is no bare
-        pnpm, when the bare pnpm already is a Corepack shim, or when a
-        standalone pnpm matches the pin exactly; anything else is
-        repointed at Corepack.
+        version-mismatch error).  The check passes when the bare pnpm
+        already is a Corepack shim or a standalone pnpm matching the pin
+        exactly; a missing bare pnpm is created, and any other standalone
+        pnpm is repointed at Corepack.
         """
         path = shutil.which("pnpm")
         if path is None:
-            return CheckResult("pnpm-shim", True, detail="no bare pnpm on PATH (corepack-only setup)")
+            if has_command("corepack"):
+                corepack_dir = os.path.dirname(shutil.which("corepack") or "corepack")
+                return CheckResult(
+                    "pnpm-shim",
+                    False,
+                    detail="no bare pnpm on PATH although Corepack is available",
+                    fix=(
+                        f"Create the pnpm shim: `corepack enable pnpm` (shims land next to corepack "
+                        f"in {corepack_dir}; prefix with sudo when the directory is root-owned)."
+                    ),
+                    probe=self.check_pnpm_shim,
+                )
+            return CheckResult(
+                "pnpm-shim",
+                True,
+                detail="no pnpm and no corepack on PATH (the corepack check owns the bootstrap)",
+            )
         if "corepack" in os.path.realpath(path):
             return CheckResult("pnpm-shim", True, detail=f"bare pnpm is a Corepack shim ({path})")
         version = self._pnpm_version()
@@ -546,15 +569,23 @@ class Doctor:
         )
 
     def check_corepack(self) -> CheckResult:
-        if not has_command("corepack"):
-            # corepack ships with Node.js; its absence means a broken install.
+        """Corepack provides the pinned pnpm; npm can install it when absent."""
+        if has_command("corepack"):
+            return CheckResult("corepack", True, detail="corepack available")
+        if has_command("npm"):
             return CheckResult(
                 "corepack",
                 False,
-                detail="corepack not found",
-                fix="Reinstall Node.js from the official distribution; corepack ships with it.",
+                detail="corepack not found (it normally ships with Node.js)",
+                fix="Install Corepack: `npm install -g corepack`.",
+                probe=self.check_corepack,
             )
-        return CheckResult("corepack", True, detail="corepack available")
+        return CheckResult(
+            "corepack",
+            False,
+            detail="corepack not found and npm is not available",
+            fix="Reinstall Node.js from the official distribution; corepack ships with it.",
+        )
 
     def check_git(self) -> CheckResult:
         version = self._git_version()
@@ -777,6 +808,8 @@ class Doctor:
         and the fix is a command this script may run itself."""
         if result.ok or not self.fix or not result.fix:
             return
+        if self.fix_names is not None and result.name not in self.fix_names:
+            return
         if not self._is_automatic(result):
             log_warn(f"Not auto-fixing {result.name}; run manually:")
             log_warn(f"  {result.fix}")
@@ -805,7 +838,9 @@ class Doctor:
         too.  `corepack enable` is safe and non-interactive.
         """
         if result.name == "corepack":
-            return False   # corepack comes from Node.js; the fix is a reinstall
+            # Installing corepack through the existing npm is automatic; a
+            # missing npm means reinstalling Node.js, which needs a decision.
+            return has_command("npm")
         if result.name in ("python3", "nodejs", "npm", "git", "astra-npm", "network", "source", "deps", "build", "env"):
             return False   # each needs a decision, a reinstall, or user action
         if result.name == "pnpm":
@@ -820,6 +855,8 @@ class Doctor:
 
     def _apply_fix(self, result: CheckResult) -> bool:
         try:
+            if result.name == "corepack":
+                return self._fix_corepack()
             if result.name == "pnpm":
                 return self._fix_pnpm()
             if result.name == "pnpm-shim":
@@ -834,20 +871,29 @@ class Doctor:
         return False
 
     def _fix_pnpm_shim(self) -> bool:
-        """Repoint the bare ``pnpm`` shim at Corepack.
+        """Create or repoint the bare ``pnpm`` shim at Corepack.
 
-        The shim is replaced in the directory the current one lives in, so
-        the command users already type keeps resolving.  A root-owned
-        directory makes the unprivileged attempt fail with EACCES; the
-        exact sudo command is then printed and the fix reports failure so
-        the re-probe does not mark the shim repaired.
+        An existing shim is replaced in the directory it lives in, so the
+        command users already type keeps resolving; a missing shim is
+        created next to the corepack binary.  A root-owned directory makes
+        the unprivileged attempt fail with EACCES; the exact sudo command
+        is then printed and the fix reports failure so the re-probe does
+        not mark the shim repaired.
         """
-        path = shutil.which("pnpm")
-        if path is None or not has_command("corepack"):
+        if not has_command("corepack"):
             return False
+        env = {"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"}
+        path = shutil.which("pnpm")
+        if path is None:
+            code, out = run_capture(["corepack", "enable", "pnpm"], env=env)
+            if code != 0:
+                log_fail(f"corepack enable pnpm failed: {out.strip()[:160]}")
+                log_warn("  Run with sudo: sudo corepack enable pnpm")
+                return False
+            return True
         target_dir = os.path.dirname(path)
         code, out = run_capture(
-            ["corepack", "enable", "pnpm", "--install-directory", target_dir]
+            ["corepack", "enable", "pnpm", "--install-directory", target_dir], env=env
         )
         if code != 0:
             log_fail(f"corepack enable pnpm failed: {out.strip()[:160]}")
@@ -855,21 +901,35 @@ class Doctor:
             return False
         return True
 
+    def _fix_corepack(self) -> bool:
+        """Install Corepack through the existing npm.
+
+        Corepack normally ships with Node.js; when it is absent but npm is
+        available, the global npm install restores it without touching
+        Node itself.
+        """
+        code, out = run_capture(["npm", "install", "-g", "corepack"])
+        if code != 0:
+            log_fail(f"npm install -g corepack failed: {out.strip()[:160]}")
+            return False
+        return has_command("corepack")
+
     def _fix_pnpm(self) -> bool:
-        """Activate the pinned pnpm through Corepack.
+        """Download and activate the pinned pnpm through Corepack.
 
         ``corepack enable`` creates global shims and can fail with EACCES on
         a root-owned bin directory; that is not fatal — the pinned pnpm is
-        still activated by ``corepack prepare --activate`` and resolves from
-        the repository's ``packageManager`` field.  Only the prepare step is
-        therefore required for a successful repair.
+        still activated by ``corepack prepare --activate``, which downloads
+        the pinned version and makes it the Corepack default.  Only the
+        prepare step is therefore required for a successful repair.
         """
+        env = {"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"}
         if has_command("corepack"):
-            code, out = run_capture(["corepack", "enable"])
+            code, out = run_capture(["corepack", "enable"], env=env)
             if code != 0:
                 log_warn(f"corepack enable skipped ({out.strip()[:120]}…); continuing with prepare --activate")
         code, out = run_capture(
-            ["corepack", "prepare", f"pnpm@{PNPM_VERSION}", "--activate"]
+            ["corepack", "prepare", f"pnpm@{PNPM_VERSION}", "--activate"], env=env
         )
         if code != 0:
             log_fail(f"corepack prepare failed: {out.strip()}")
@@ -1038,8 +1098,14 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
     log(f"  Platform: {platform_info.os} / {platform_info.distro} {platform_info.version}")
 
     # Prerequisite gate: only environment checks block; source/deps/build are
-    # exactly what install creates, and the API key is optional.
-    doctor = Doctor(platform_info, source_dir, fix=False)
+    # exactly what install creates, and the API key is optional.  The pnpm
+    # toolchain is bootstrapped right here — corepack through npm, the pinned
+    # pnpm through corepack prepare, the bare pnpm shim through corepack
+    # enable — so a fresh machine ends the install with a working pnpm.
+    doctor = Doctor(
+        platform_info, source_dir, fix=True,
+        fix_names=frozenset({"corepack", "pnpm", "pnpm-shim"}),
+    )
     doctor.run_all()
     blocking = [
         r for r in doctor.results

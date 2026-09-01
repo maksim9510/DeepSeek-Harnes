@@ -6,7 +6,7 @@
 
 ## 安装脚本做什么
 
-`install` 命令检查环境、安装缺失的系统依赖、将仓库克隆到 `~/.dsh/source`、运行 `pnpm install` 和 `pnpm run build`、为你的 API 密钥创建空的 `.env` 文件，并打印启动 Web UI 的命令。
+`install` 命令检查环境，搭建 pnpm 工具链——在缺失时通过 npm 安装 Corepack，通过 `corepack prepare` 下载并激活固定的 `pnpm@11.7.0`，创建或重定向裸 `pnpm` shim——然后安装缺失的系统依赖，将仓库克隆到 `~/.dsh/source`，运行 `pnpm install` 和 `pnpm run build`，为你的 API 密钥创建空的 `.env` 文件，并打印启动 Web UI 的命令。
 
 ```sh
 python3 DeepSeek-install.py install
@@ -45,8 +45,9 @@ Astra Linux 基于 Debian，但其自带的 npm 比项目工具链需要的版�
 
 ## 安装脚本自动修复什么
 
-- 比固定版本更旧的 pnpm：Corepack 激活固定的 pnpm。
-- 版本与固定版本不同的裸 `pnpm` shim（低于 10 的独立 pnpm 重写锁文件；更新的则拒绝在 Corepack 下切换，使构建中的嵌套 pnpm 调用失败）：shim 被重新指向 Corepack；当其目录归 root 所有时，会报告确切的 `sudo corepack enable pnpm` 命令。
+- 缺失的 Corepack（当 npm 可用时）：使用 `npm install -g corepack` 安装 Corepack。
+- 与固定版本不同的 pnpm：`corepack prepare pnpm@11.7.0 --activate` 下载并激活固定的 pnpm。
+- 裸 `pnpm` shim 缺失或版本与固定版本不同（低于 10 的独立 pnpm 重写锁文件；更新的则拒绝在 Corepack 下切换，使构建中的嵌套 pnpm 调用失败）：shim 被创建或重新指向 Corepack；当其目录归 root 所有时，会报告确切的 `sudo corepack enable pnpm` 命令。
 - 与 `pnpm-workspace.yaml` 不同步的锁文件：使用 `pnpm install --no-frozen-lockfile --lockfile-only` 重新生成锁文件。
 - 缺失的发行版软件包：通过系统软件包管理器安装。
 
