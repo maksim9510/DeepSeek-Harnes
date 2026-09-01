@@ -2,13 +2,26 @@
 
 [English](README.md) | 中文
 
-本 fork 为 Web 界面添加了俄语——见 [README.ru.md](README.ru.md)（俄语）。
+本页英文版 — [README.en.md](README.en.md)（在本 fork 中，默认 README 为俄语）。
 
 DeepSeek Harness（`dsh`）是由 [DeepSeek AI](https://deepseek.com) 开发的开源 agent harness（智能体框架）。
 
 它构建于**一切皆插件**的架构之上，由 [Cordis](https://github.com/cordiverse/cordis) 驱动，其设计参见论文 [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512)。
 
 文档：[https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
+
+## 俄语本地化
+
+本 fork 为 Web 界面添加了俄语（`pnpm dsh web`）。本地化以语言包插件 [`@deepseek-ai/dsh-client-locale-ru`](packages/extensions/locale-ru/README.zh.md) 的形式提供——`dsh-client-locale` 内核未被修改，整个界面通过数据而非代码改动完成翻译。
+
+效果：
+
+- **Settings → General → Language** 中出现 **Русский** 选项（位于中文和 English 之后）；选择在会话之间保持。
+- 主语言为 `ru-RU` 的浏览器直接以俄语打开；页面的 `<html lang>` 跟随选择。
+- 客户端界面约 1050 条文案已翻译——按命名空间划分的 33 个词典（聊天、轨迹、设置、工作区等）；未覆盖的命名空间沿 `ru → en` 链自动回退到英语。
+- 该包通过 `packages/bundle/web-app/cordis.patch.yml` 花名册中的一行挂载：删除该行，语言即消失；通过 `ctx.locale.register(ns, 'ru', dict)` 添加自己的词典，即可覆盖新命名空间。
+
+详见[该包的 README](packages/extensions/locale-ru/README.zh.md)。
 
 ## 开发者预览
 
@@ -37,8 +50,8 @@ npx @deepseek-ai/dsh web
 如需从仓库源码运行：
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
+git clone https://github.com/maksim9510/DeepSeek-Harnes.git
+cd DeepSeek-Harnes
 pnpm install
 pnpm run build
 pnpm dsh web
@@ -71,7 +84,7 @@ pnpm dsh web
 
 ## 参与贡献
 
-参见 [CONTRIBUTING.md](CONTRIBUTING.zh.md)。
+参见 [CONTRIBUTING.zh.md](CONTRIBUTING.zh.md)。
 
 ## 开发
 

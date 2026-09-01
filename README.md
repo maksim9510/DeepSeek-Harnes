@@ -2,64 +2,81 @@
 
 English | [中文](README.zh.md)
 
-This fork adds a Russian web UI — see [README.ru.md](README.ru.md) (in Russian).
+English version of this page — [README.en.md](README.en.md).
 
-DeepSeek Harness (`dsh`) is an open-source agent harness developed by [DeepSeek AI](https://deepseek.com).
+DeepSeek Harness (`dsh`) — открытый agent harness (агентный фреймворк) разработки [DeepSeek AI](https://deepseek.com).
 
-It is built on an **everything-is-a-plugin** architecture and powered by [Cordis](https://github.com/cordiverse/cordis), whose design is described in [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
+Построен на архитектуре **«всё — плагин»** и работает поверх [Cordis](https://github.com/cordiverse/cordis); дизайн описан в статье [_A Programming Paradigm for Spatiotemporal Composability_](https://arxiv.org/abs/2608.25512).
 
-Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
+Документация: [https://deepseek-harness.github.io/deepseek-harness/](https://deepseek-harness.github.io/deepseek-harness/)
+
+## Русская локализация
+
+Этот форк добавляет русский язык в веб-интерфейс (`pnpm dsh web`). Локализация оформлена пакетом-языковым паком [`@deepseek-ai/dsh-client-locale-ru`](packages/extensions/locale-ru/README.md) — ядро `dsh-client-locale` не изменено, весь интерфейс переводится данными, а не правками кода.
+
+Что это даёт:
+
+- В **Settings → General → Language** появляется пункт **Русский** (после 中文 и English); выбор сохраняется между сессиями.
+- Браузер с основным языком `ru-RU` открывается сразу на русском; `<html lang>` страницы следует выбору.
+- Переведено ~1050 строк клиентского интерфейса — 33 словаря по неймспейсам (чат, траектория, настройки, рабочее пространство и т.д.); непокрытые неймспейсы автоматически падают в английский по цепочке `ru → en`.
+- Пакет монтируется одной строкой ростера в `packages/bundle/web-app/cordis.patch.yml`: удалите её — язык исчезнет; добавьте свой словарь через `ctx.locale.register(ns, 'ru', dict)` — покроете новый неймспейс.
+
+Подробности — в [README пакета](packages/extensions/locale-ru/README.md).
 
 ## Developer preview
 
-DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**
+DeepSeek Harness находится в стадии _developer preview_ и быстро развивается. **Будут изменения, ломающие совместимость.**
 
-Review the [safety notice](SAFETY.md) before running the project.
+Перед запуском проекта прочтите [уведомление о безопасности](SAFETY.md).
 
-## Run
+<a id="run"></a>
 
-### Run from `npm`
+## Запуск
 
-Install `Node.js`, then run:
+### Запуск из `npm`
+
+Установите `Node.js`, затем выполните:
 
 ```sh
 npx @deepseek-ai/dsh web
 ```
 
-The command starts the Web UI at `http://127.0.0.1:3080` by default and opens it in the default browser for a local launch. An SSH launch only prints the host URL because the SSH client or editor owns the local forwarded address. Pass `--no-open` to run the server without opening a browser. See [Web UI guide](docs/user/guide/index.md).
+Команда поднимает Web UI на `http://127.0.0.1:3080` и при локальном запуске открывает его в браузере по умолчанию. При запуске через SSH печатается только URL хоста — локальный проброшенный адрес знает SSH-клиент или редактор. Флаг `--no-open` запускает сервер без открытия браузера. См. [руководство по Web UI](docs/user/guide/index.md).
 
-### Run from source
+<a id="run-from-source"></a>
 
-To run from a repository checkout:
+### Запуск из исходников
+
+Для запуска из чекаута репозитория:
 
 ```sh
-git clone https://github.com/deepseek-ai/deepseek-harness.git
-cd deepseek-harness
+git clone https://github.com/maksim9510/DeepSeek-Harnes.git
+cd DeepSeek-Harnes
 pnpm install
 pnpm run build
 pnpm dsh web
 ```
 
-`pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
+`pnpm run build` готовит артефакты репозитория. `pnpm dsh web` использует уже собранные артефакты и не пересобирает их.
 
-## Community and support
+## Сообщество и поддержка
 
-- Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
-- Add the [`dsh-plugin`](https://github.com/topics/dsh-plugin) topic to your plugin repository for discoverability.
-- Join <a href="https://discord.gg/Ycq5dCaS4">DeepSeek Harness Discord community</a>.
+- Отзывы и сообщения об ошибках — через [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) апстрима.
+- Добавьте тему [`dsh-plugin`](https://github.com/topics/dsh-plugin) в репозиторий своего плагина — так его легче найти.
+- Присоединяйтесь к <a href="https://discord.gg/Ycq5dCaS4">Discord-сообществу DeepSeek Harness</a>.
 
-## Contributing
+## Участие в разработке
 
-See [CONTRIBUTING.md](CONTRIBUTING.md).
+См. [CONTRIBUTING.md](CONTRIBUTING.md).
 
-## Development
+## Разработка
 
-Start with the [development guide](docs/development.md) and [architecture documentation](docs/architecture.md).
+Начните с [руководства по разработке](docs/development.md) и [документации по архитектуре](docs/architecture.md).
 
-For agents, follow [AGENTS.md](AGENTS.md).
+Для агентов — следуйте [AGENTS.md](AGENTS.md).
 
-## License
+## Лицензия
 
 [MIT](LICENSE)
 
-Third-party dependencies and their licenses are disclosed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
+Сторонние зависимости и их лицензии перечислены в [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
