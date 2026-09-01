@@ -77,6 +77,8 @@ pnpm dsh web
 
 `pnpm run build` 会准备仓库产物。`pnpm dsh web` 会直接使用这些已构建产物，不会重新构建。
 
+**重要：** pnpm 版本固定在 `package.json` 中（`packageManager: pnpm@11.7.0`），请通过 Corepack 运行——使用 `corepack pnpm …`，或在系统上执行一次 `corepack enable`，之后裸 `pnpm` 也会经由 Corepack 解析。低于 10 的全局 pnpm 无法理解 `pnpm-workspace.yaml` 中的 `overrides`：它会悄悄重写 `pnpm-lock.yaml`，随后 `pnpm install` 会因 frozen lockfile 错误而失败。同步脚本 `python3 DeepSeek-sync.py` 会识别这种被重写的锁文件并自动恢复。
+
 ## 社区与支持
 
 - 通过 [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) 提交反馈或 bug 报告。

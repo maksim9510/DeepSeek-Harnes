@@ -77,6 +77,8 @@ pnpm dsh web
 
 `pnpm run build` готовит артефакты репозитория. `pnpm dsh web` использует уже собранные артефакты и не пересобирает их.
 
+**Важно:** версия pnpm закреплена в `package.json` (`packageManager: pnpm@11.7.0`), и запускать её нужно через Corepack — `corepack pnpm …` либо один раз на систему `corepack enable`, после чего голый `pnpm` сам резолвится через Corepack. Глобальный pnpm старее 10 не понимает `overrides` из `pnpm-workspace.yaml`: он молча перезаписывает `pnpm-lock.yaml`, и следующий `pnpm install` падает с ошибкой frozen lockfile. Скрипт синхронизации `python3 DeepSeek-sync.py` распознаёт такой перезаписанный lockfile и восстанавливает его автоматически.
+
 ## Сообщество и поддержка
 
 - Отзывы и сообщения об ошибках — через [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) апстрима.
