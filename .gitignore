@@ -41,3 +41,8 @@ apps/web/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+
+# DeepSeek-sync.py runtime artifacts
+sync-needs-human.txt
+sync.log
+.sync-lock

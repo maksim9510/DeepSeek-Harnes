@@ -149,6 +149,10 @@ describe('web e2e: shipped default web search', () => {
     searchBaseURL = search.baseURL
     scaffold = await launchWebScaffold({
       compareReplaySession: true,
+      // This scenario exercises the legacy DeepSeek search provider; the
+      // shipped composition defaults to the routerai provider, so pin the
+      // seam explicitly.
+      searchProvider: 'deepseek-official',
       deepSeekSearch: {
         baseURL: search.baseURL,
         apiKeyEnv: SEARCH_CREDENTIAL_REF,

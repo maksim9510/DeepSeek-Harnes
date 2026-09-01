@@ -315,6 +315,13 @@ export interface LaunchOptions {
     apiKeyEnv: string
   }
   /**
+   * Pin the web seam's `searchProvider` id. The shipped composition defaults
+   * to `routerai` (the search provider that reuses the current chat model);
+   * scenarios exercising the legacy DeepSeek provider explicitly pin
+   * `deepseek-official` here.
+   */
+  searchProvider?: string
+  /**
    * Replace the roster row the scaffold pins by default (no configured roots,
    * default `standard` — the plugin's own shipped presets). Supply this only
    * to change WHICH presets a scenario sees beyond the shipped set — a
@@ -556,6 +563,11 @@ export async function launchWebScaffold(options: LaunchOptions = {}): Promise<We
           baseURL: options.deepSeekSearch.baseURL,
         },
       }],
+    // Pin the web seam's search provider when a scenario names one. A patch
+    // replaces the row's complete config, so restate the shipped fetchProvider.
+    ...options.searchProvider === undefined
+      ? []
+      : [{ id: 'web', config: { searchProvider: options.searchProvider, fetchProvider: 'http' } }],
     ...mode === 'record' || options.deepSeekMissingCredential === true
       ? []
       : [{ id: 'llm-deepseek', disabled: true }],

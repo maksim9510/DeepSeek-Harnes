@@ -565,6 +565,8 @@
       "@deepseek-ai/dsh-web-fetch-http/invariant": ["./packages/web/web-fetch-http/src/invariant.ts"],
       "@deepseek-ai/dsh-web-search-deepseek": ["./packages/web/web-search-deepseek/src"],
       "@deepseek-ai/dsh-web-search-deepseek/invariant": ["./packages/web/web-search-deepseek/src/invariant.ts"],
+      "@deepseek-ai/dsh-web-search-routerai": ["./packages/web/web-search-routerai/src"],
+      "@deepseek-ai/dsh-web-search-routerai/invariant": ["./packages/web/web-search-routerai/src/invariant.ts"],
       "@deepseek-ai/dsh-web-search-exa": ["./packages/web/web-search-exa/src"],
       "@deepseek-ai/dsh-web-search-exa/invariant": ["./packages/web/web-search-exa/src/invariant.ts"],
       "@deepseek-ai/dsh-web-search-perplexity": ["./packages/web/web-search-perplexity/src"],

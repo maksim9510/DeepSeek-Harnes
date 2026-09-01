@@ -79,7 +79,7 @@ pnpm dsh web
 
 **Важно:** версия pnpm закреплена в `package.json` (`packageManager: pnpm@11.7.0`), и запускать её нужно через Corepack — `corepack pnpm …` либо один раз на систему `corepack enable`, после чего голый `pnpm` сам резолвится через Corepack. Глобальный pnpm старее 10 не понимает `overrides` из `pnpm-workspace.yaml`: он молча перезаписывает `pnpm-lock.yaml`, и следующий `pnpm install` падает с ошибкой frozen lockfile. Скрипт синхронизации `python3 DeepSeek-sync.py` распознаёт такой перезаписанный lockfile и восстанавливает его автоматически.
 
-**Веб-поиск:** в этом форке поиск работает через локальный endpoint `http://127.0.0.1:24881/v1` (Anthropic-совместимый Messages API). Задайте его переменной `DEEPSEEK_SEARCH_BASE_URL` в `.env` либо в настройках Web UI, неймспейс `web-search-deepseek` (поле `baseURL`); API-ключ берётся из `DEEPSEEK_API_KEY`.
+**Веб-поиск:** поиск переиспользует провайдера, к которому уже подключён текущий чат, — отдельный ключ и endpoint не нужны. Провайдер `web-search-routerai` определяет активную модель агента (из заголовка сессии или `agent-default-model`), читает endpoint/ключ выбранного провайдера из секции `llm-pi-ai` в настройках и гоняет нативный серверный поисковый тул этого же провайдера (`web_search_preview` для OpenAI-совместимых, `web_search_20250305` для Anthropic-совместимых роутеров). Fallback-endpoint можно задать переменной `DEEPSEEK_SEARCH_BASE_URL` в `.env` либо в настройках Web UI, неймспейс `web-search-routerai` (поле `baseURL`); ключ берётся из того же `apiKeyEnv`, что и у выбранного провайдера.
 
 ## Сообщество и поддержка
 
