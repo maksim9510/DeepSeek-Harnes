@@ -50,6 +50,8 @@ pnpm dsh web
 
 **Important:** the pnpm version is pinned in `package.json` (`packageManager: pnpm@11.7.0`); run it through Corepack — `corepack pnpm …`, or run `corepack enable` once per system so bare `pnpm` resolves through Corepack. A global pnpm older than 10 does not understand the `overrides` in `pnpm-workspace.yaml`: it silently rewrites `pnpm-lock.yaml`, and the next `pnpm install` fails with a frozen-lockfile error. The sync script `python3 DeepSeek-sync.py` recognizes such a rewritten lockfile and restores it automatically.
 
+**Web search:** in this fork, search runs through the local endpoint `http://127.0.0.1:24881/v1` (the Anthropic-compatible Messages API). Set it through the `DEEPSEEK_SEARCH_BASE_URL` variable in `.env` or in the Web UI settings (`web-search-deepseek` namespace, the `baseURL` field); the API key comes from `DEEPSEEK_API_KEY`.
+
 On Ubuntu, Debian, Arch Linux, Astra Linux, and Windows you can also install automatically with the universal [`DeepSeek-install.py`](DeepSeek-install.py) script (Python 3, stdlib only), which checks the environment, clones the repo into `~/.dsh/source`, runs the install and build, and includes a `doctor` command that diagnoses and auto-fixes most environment problems:
 
 ```sh

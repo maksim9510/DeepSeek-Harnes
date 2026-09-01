@@ -79,6 +79,8 @@ pnpm dsh web
 
 **重要：** pnpm 版本固定在 `package.json` 中（`packageManager: pnpm@11.7.0`），请通过 Corepack 运行——使用 `corepack pnpm …`，或在系统上执行一次 `corepack enable`，之后裸 `pnpm` 也会经由 Corepack 解析。低于 10 的全局 pnpm 无法理解 `pnpm-workspace.yaml` 中的 `overrides`：它会悄悄重写 `pnpm-lock.yaml`，随后 `pnpm install` 会因 frozen lockfile 错误而失败。同步脚本 `python3 DeepSeek-sync.py` 会识别这种被重写的锁文件并自动恢复。
 
+**网络搜索：** 在此 fork 中，搜索通过本地 endpoint `http://127.0.0.1:24881/v1` 工作（Anthropic 兼容的 Messages API）。请通过 `.env` 中的 `DEEPSEEK_SEARCH_BASE_URL` 变量或 Web UI 设置（命名空间 `web-search-deepseek`，字段 `baseURL`）指定它；API 密钥取自 `DEEPSEEK_API_KEY`。
+
 ## 社区与支持
 
 - 通过 [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) 提交反馈或 bug 报告。
