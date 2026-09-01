@@ -46,7 +46,6 @@ export const ru = {
   'image.tooManyPixels': 'Разрешение изображения слишком высокое; сожмите его и попробуйте снова',
   'image.dimensionTooLarge': 'Стороны изображения не могут превышать {size}px; уменьшите его и попробуйте снова',
   'image.modelUnsupported': 'Текущая модель не поддерживает изображения; переключитесь на модель с поддержкой',
-  'image.subagentUnsupported': 'Сессии субагентов пока не поддерживают изображения',
   'image.sendFailed': 'Не удалось отправить изображения ({reason}); добавьте их заново и попробуйте снова',
   'context.aria': 'Использовано {percent} контекста',
   'context.used': 'Использовано контекста',
@@ -154,4 +153,5 @@ export const ru = {
   'terminal.expandRest': '… ещё {n} строк',
   'terminal.sendInput': '(отправить ввод)',
   'terminal.session': 'Терминал {sessionId}',
+  'queue.image': 'Изображение в очереди сообщений',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>

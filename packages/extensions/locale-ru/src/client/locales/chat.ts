@@ -115,4 +115,5 @@ export const ru = {
   'json.truncated': '… усечено, всего {total} символов',
   'clock.md': '{d}.{m}',
   'clock.ymd': '{d}.{m}.{y}',
+  'chat.turnNavigation.jumpLoad': 'Загрузить и перейти к ходу {turn}',
 } satisfies Record<LocaleNamespaceMap['chat'], string>
