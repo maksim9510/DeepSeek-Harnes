@@ -33,6 +33,24 @@ DeepSeek Harness 处于 _开发者预览_ 阶段，正在快速迭代。**未来
 
 ## 运行
 
+### 使用脚本安装
+
+如需在 Ubuntu、Debian、Arch Linux、Astra Linux 和 Windows 上从源码自动安装，请使用通用脚本 [`DeepSeek-install.py`](DeepSeek-install.py)（Python 3，仅标准库）：
+
+```sh
+python3 DeepSeek-install.py install
+```
+
+脚本自行检查环境、安装缺失的依赖、将仓库克隆到 `~/.dsh/source`、执行 `pnpm install` 和 `pnpm run build`，然后打印启动命令。
+
+内置医生（doctor）可以发现并自动修复大多数环境问题：
+
+```sh
+python3 DeepSeek-install.py doctor --fix
+```
+
+医生会考虑 Astra Linux 的特性：该系统自带的 `npm` 比所需版本更旧，此时它会建议从官方 NodeSource 发行版安装 Node.js，而不是使用发行版仓库中的软件包。详见[脚本文档](docs/user/guide/install.zh.md)。
+
 ### 通过 `npm` 运行
 
 安装 `Node.js`，然后运行：

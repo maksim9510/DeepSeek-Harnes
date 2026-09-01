@@ -48,6 +48,13 @@ pnpm dsh web
 
 `pnpm run build` prepares the repository artifacts. `pnpm dsh web` uses those built artifacts without rebuilding.
 
+On Ubuntu, Debian, Arch Linux, Astra Linux, and Windows you can also install automatically with the universal [`DeepSeek-install.py`](DeepSeek-install.py) script (Python 3, stdlib only), which checks the environment, clones the repo into `~/.dsh/source`, runs the install and build, and includes a `doctor` command that diagnoses and auto-fixes most environment problems:
+
+```sh
+python3 DeepSeek-install.py install
+python3 DeepSeek-install.py doctor --fix
+```
+
 ## Community and support
 
 - Submit feedback or bug reports through [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions).
