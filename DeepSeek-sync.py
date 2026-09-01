@@ -156,6 +156,34 @@ def has_command(name: str) -> bool:
     return shutil.which(name) is not None
 
 
+def parse_version(text: str) -> Optional[Tuple[int, int, int]]:
+    """Parse a leading ``X.Y.Z`` (or ``X.Y``) version out of arbitrary text."""
+    match = re.search(r"(\d+)\.(\d+)(?:\.(\d+))?", text or "")
+    if not match:
+        return None
+    return (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3) or 0),
+    )
+
+
+def pinned_pnpm_version() -> Optional[Tuple[int, int, int]]:
+    """pnpm version pinned by the repository's ``packageManager`` field."""
+    try:
+        text = (REPO_ROOT / "package.json").read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = re.search(r'"packageManager":\s*"pnpm@(\d+)\.(\d+)(?:\.(\d+))?', text)
+    if not match:
+        return None
+    return (
+        int(match.group(1)),
+        int(match.group(2)),
+        int(match.group(3) or 0),
+    )
+
+
 # ---------------------------------------------------------------------------
 # Human intervention report
 # ---------------------------------------------------------------------------
@@ -306,6 +334,47 @@ def restore_drifted_lockfile() -> bool:
     log_ok("pnpm-lock.yaml был перезаписан глобальным pnpm старее закреплённой версии;"
            " восстановлен из HEAD (используйте `corepack pnpm` вместо голого `pnpm`)")
     return True
+
+
+def ensure_pnpm_shim() -> Optional[str]:
+    """Repoint a standalone pnpm shim at Corepack; return a human problem or None.
+
+    The sync runs pnpm through Corepack, and the build's nested
+    ``pnpm --filter …`` calls resolve through PATH.  A standalone pnpm
+    whose version differs from the repository pin breaks in both
+    directions — older than 10 rewrites the lockfile without the workspace
+    overrides; newer refuses to switch under Corepack — so the shim is
+    repointed before the merge.  A root-owned directory cannot be fixed
+    without privileges; the exact sudo command is returned for the human
+    report.
+    """
+    if not has_command("corepack"):
+        return None  # a standalone pnpm self-switches when no Corepack env exists
+    path = shutil.which("pnpm")
+    if path is None or "corepack" in os.path.realpath(path):
+        return None
+    pin = pinned_pnpm_version()
+    if pin is None:
+        return None
+    code, out = run_capture(["pnpm", "--version"])
+    version = parse_version(out if code == 0 else "")
+    if version == pin:
+        return None
+    version_text = ".".join(str(p) for p in version) if version else "unknown"
+    pin_text = ".".join(str(p) for p in pin)
+    log_step(f"Голый pnpm ({version_text}) отличается от закреплённого ({pin_text}); перепривязываю shim на Corepack")
+    fix_code, fix_out = run_capture(
+        ["corepack", "enable", "pnpm", "--install-directory", os.path.dirname(path)]
+    )
+    if fix_code == 0:
+        log_ok(f"pnpm теперь резолвится через Corepack (pin {pin_text})")
+        return None
+    log_fail(f"corepack enable pnpm не удался: {fix_out.strip()[:160]}")
+    return (
+        f"Голый pnpm {version_text} в {path} отличается от закреплённого {pin_text}, и автоматическая"
+        " перепривязка не удалась (каталог принадлежит root).\n"
+        f"  Команда: sudo corepack enable pnpm --install-directory {os.path.dirname(path)}"
+    )
 
 
 def fetch_remotes() -> Optional[str]:
@@ -592,6 +661,11 @@ def _sync() -> int:
     HUMAN_REPORT.unlink(missing_ok=True)  # only the latest run's report stays
 
     restore_drifted_lockfile()
+
+    problem = ensure_pnpm_shim()
+    if problem:
+        write_human_report("Синхронизация остановлена: голый pnpm отличается от пина", [problem])
+        return 1
 
     problem = ensure_clean_tree()
     if problem:

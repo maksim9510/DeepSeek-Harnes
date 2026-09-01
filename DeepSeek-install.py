@@ -113,6 +113,9 @@ def run(
     if capture:
         kwargs["stdout"] = subprocess.PIPE
         kwargs["stderr"] = subprocess.STDOUT
+        kwargs["text"] = True
+        kwargs["encoding"] = "utf-8"
+        kwargs["errors"] = "replace"
     if os.name == "nt":
         kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
     if cwd is not None:
@@ -125,7 +128,7 @@ def run(
 
 def run_capture(args: List[str], env: Optional[dict] = None) -> Tuple[int, str]:
     proc = run(args, capture=True, env=env)
-    return proc.returncode, (proc.stdout or "").decode("utf-8", "replace")
+    return proc.returncode, proc.stdout or ""
 
 
 def require_command(name: str) -> Optional[str]:
@@ -503,6 +506,45 @@ class Doctor:
             probe=self.check_pnpm,
         )
 
+    def check_pnpm_shim(self) -> CheckResult:
+        """The bare ``pnpm`` a user types must be safe to run.
+
+        A standalone pnpm whose version differs from the pin breaks the
+        project in both directions: older than 10 it does not read the
+        workspace ``overrides`` and silently rewrites ``pnpm-lock.yaml``;
+        newer it refuses to switch to the pinned version when a parent
+        process already invoked pnpm through Corepack (the nested
+        ``pnpm --filter …`` calls in `pnpm run build` fail with the
+        version-mismatch error).  The check passes when there is no bare
+        pnpm, when the bare pnpm already is a Corepack shim, or when a
+        standalone pnpm matches the pin exactly; anything else is
+        repointed at Corepack.
+        """
+        path = shutil.which("pnpm")
+        if path is None:
+            return CheckResult("pnpm-shim", True, detail="no bare pnpm on PATH (corepack-only setup)")
+        if "corepack" in os.path.realpath(path):
+            return CheckResult("pnpm-shim", True, detail=f"bare pnpm is a Corepack shim ({path})")
+        version = self._pnpm_version()
+        pinned = tuple(int(p) for p in PNPM_VERSION.split("."))
+        if version == pinned:
+            return CheckResult("pnpm-shim", True, detail=f"standalone pnpm {format_version_tuple(version)} matches the pin exactly")
+        version_text = format_version_tuple(version) if version else "unknown"
+        return CheckResult(
+            "pnpm-shim",
+            False,
+            detail=(
+                f"standalone pnpm {version_text} at {path} differs from the pinned {PNPM_VERSION}: "
+                "older-than-10 rewrites pnpm-lock.yaml without the workspace overrides; newer refuses to "
+                "switch under Corepack and fails the nested pnpm calls in the build"
+            ),
+            fix=(
+                f"Point the shim at Corepack: `corepack enable pnpm --install-directory {os.path.dirname(path)}` "
+                "(prefix with sudo when the directory is root-owned)."
+            ),
+            probe=self.check_pnpm_shim,
+        )
+
     def check_corepack(self) -> CheckResult:
         if not has_command("corepack"):
             # corepack ships with Node.js; its absence means a broken install.
@@ -714,6 +756,7 @@ class Doctor:
             self.check_npm(),
             self.check_corepack(),
             self.check_pnpm(),
+            self.check_pnpm_shim(),
             self.check_git(),
             self.check_distro_packages(),
             self.check_astra_npm(),
@@ -767,6 +810,8 @@ class Doctor:
             return False   # each needs a decision, a reinstall, or user action
         if result.name == "pnpm":
             return True    # corepack enable + prepare is automatic
+        if result.name == "pnpm-shim":
+            return True    # repointing the shim at corepack is automatic; EACCES is reported with the sudo command
         if result.name == "lockfile":
             return True    # lockfile regeneration inside the checkout
         if result.name == "packages":
@@ -777,6 +822,8 @@ class Doctor:
         try:
             if result.name == "pnpm":
                 return self._fix_pnpm()
+            if result.name == "pnpm-shim":
+                return self._fix_pnpm_shim()
             if result.name == "lockfile":
                 return self._fix_lockfile()
             if result.name == "packages":
@@ -785,6 +832,28 @@ class Doctor:
             log_fail(f"auto-fix failed: {exc}")
             return False
         return False
+
+    def _fix_pnpm_shim(self) -> bool:
+        """Repoint the bare ``pnpm`` shim at Corepack.
+
+        The shim is replaced in the directory the current one lives in, so
+        the command users already type keeps resolving.  A root-owned
+        directory makes the unprivileged attempt fail with EACCES; the
+        exact sudo command is then printed and the fix reports failure so
+        the re-probe does not mark the shim repaired.
+        """
+        path = shutil.which("pnpm")
+        if path is None or not has_command("corepack"):
+            return False
+        target_dir = os.path.dirname(path)
+        code, out = run_capture(
+            ["corepack", "enable", "pnpm", "--install-directory", target_dir]
+        )
+        if code != 0:
+            log_fail(f"corepack enable pnpm failed: {out.strip()[:160]}")
+            log_warn(f"  Run with sudo: sudo corepack enable pnpm --install-directory {target_dir}")
+            return False
+        return True
 
     def _fix_pnpm(self) -> bool:
         """Activate the pinned pnpm through Corepack.
@@ -975,7 +1044,7 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
     blocking = [
         r for r in doctor.results
         if not r.ok and r.name in (
-            "python3", "nodejs", "npm", "corepack", "pnpm",
+            "python3", "nodejs", "npm", "corepack", "pnpm", "pnpm-shim",
             "git", "packages", "astra-npm", "network",
         )
     ]

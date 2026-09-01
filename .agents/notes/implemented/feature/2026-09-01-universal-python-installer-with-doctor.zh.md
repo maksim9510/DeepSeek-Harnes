@@ -15,6 +15,7 @@ Status: implemented
 内置的 `doctor` 命令探测环境，并为每个问题报告确切的修复命令。使用 `--fix` 时，它自动应用安全的修复，并重新探测以确认每次修复都已生效：
 
 - pnpm 比固定版本更旧：Corepack 激活 `pnpm@11.7.0`；当 `corepack enable` 因根用户拥有的 bin 目录报 EACCES 时，会报告 `sudo corepack enable` 替代方案。
+- 版本与固定版本不同的裸 `pnpm` shim（低于 10 的独立 pnpm 不读取 workspace 的 `overrides`，会悄悄重写锁文件；更新的则拒绝在 Corepack 下切换到固定版本，使构建中的嵌套 `pnpm --filter …` 调用失败）：shim 被原地重新指向 Corepack，root 所有的目录会报告确切的 `sudo corepack enable pnpm --install-directory …` 命令。
 - 锁文件与 `pnpm-workspace.yaml` 不同步（pnpm 的 `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`）：使用 `pnpm install --no-frozen-lockfile --lockfile-only` 重新生成锁文件，重试一次。
 - 缺失的发行版软件包：按平台通过 `apt-get` / `pacman` / `winget` 安装。
 

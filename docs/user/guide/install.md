@@ -23,7 +23,7 @@ python3 DeepSeek-install.py doctor
 python3 DeepSeek-install.py doctor --fix
 ```
 
-The doctor checks Python, Node.js, npm, Corepack, pnpm, git, system packages, the checkout state, installed dependencies, build artifacts, the API key, and network reachability. The report is also available as JSON for scripting:
+The doctor checks Python, Node.js, npm, Corepack, pnpm, git, system packages, the checkout state, installed dependencies, build artifacts, the API key, and network reachability. It also inspects the bare `pnpm` on PATH: a standalone pnpm whose version differs from the pinned one breaks the project in both directions — older than 10 it silently rewrites `pnpm-lock.yaml` without the `pnpm-workspace.yaml` overrides, newer it refuses to switch to the pinned version under Corepack and fails the nested `pnpm --filter …` calls in `pnpm run build`. The doctor flags such a shim and, on `--fix`, repoints it at Corepack. The report is also available as JSON for scripting:
 
 ```sh
 python3 DeepSeek-install.py doctor --json
@@ -46,6 +46,7 @@ Astra Linux is Debian-based but ships an npm older than the project toolchain ne
 ## What the installer repairs automatically
 
 - A pnpm older than the pinned version: Corepack activates the pinned pnpm.
+- A bare `pnpm` shim whose version differs from the pinned one (a standalone pnpm older than 10 rewrites the lockfile; a newer one refuses to switch under Corepack and fails the build's nested pnpm calls): the shim is repointed at Corepack; when its directory is root-owned, the exact `sudo corepack enable pnpm` command is reported.
 - A lockfile out of sync with `pnpm-workspace.yaml`: the lockfile is regenerated with `pnpm install --no-frozen-lockfile --lockfile-only`.
 - Missing distro packages: they are installed through the system package manager.
 

@@ -15,6 +15,7 @@ The repository ships a universal installer as a single stdlib-only Python 3 scri
 A built-in `doctor` command probes the environment and reports each problem with the exact fix command. With `--fix` it applies the repairs that are safe to run automatically and re-probes to confirm each repair landed:
 
 - pnpm older than the pinned version: Corepack activates `pnpm@11.7.0`; `corepack enable` EACCES on a root-owned bin directory is reported with the `sudo corepack enable` alternative.
+- A bare `pnpm` shim whose version differs from the pinned one (a standalone pnpm older than 10 does not read the workspace `overrides` and silently rewrites the lockfile; a newer one refuses to switch to the pin under Corepack and fails the build's nested `pnpm --filter …` calls): the shim is repointed at Corepack in place, and a root-owned directory is reported with the exact `sudo corepack enable pnpm --install-directory …` command.
 - A lockfile out of sync with `pnpm-workspace.yaml` (pnpm's `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH`): the lockfile is regenerated with `pnpm install --no-frozen-lockfile --lockfile-only`, retried once.
 - Missing distro packages: installed through `apt-get` / `pacman` / `winget` per platform.
 
