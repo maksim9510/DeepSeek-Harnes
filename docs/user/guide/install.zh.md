@@ -59,6 +59,8 @@ Astra Linux 基于 Debian，但其自带的 npm 比项目工具链需要的版�
 python3 DeepSeek-sync.py
 ```
 
+同步会自动修复检出布局：全新的 `git clone` 的 fork——只有一个指向 fork 的 `origin` remote、检出于 `main`、没有本地 `master`——会被原地调整到同步布局（在 fork 的 `main` 上创建本地 `master`、把 `origin` 改指上游、把 fork 添加为 `personal`），并且只要 fork 自行前进了，`master` 就会快进到 fork 的 `main`。每次都从同一个检出运行同步；同步脚本属于 fork，因此请先拉取 fork 的 `main`，以获得脚本自身的最新版本。
+
 同步通过合并前后的标记审计保护 fork 的本地工作——俄语 README、俄语 Web 本地化、安装脚本和锁文件修复。它自动修复可以安全决定的问题：合并造成的锁文件漂移，以及上游新增或删除的 ru 词典键（从 typecheck 输出解析，最多三轮修复，翻译来自内置表并以英文原文作为后备）。它在推送之前用 `pnpm install --frozen-lockfile` 和 `pnpm run typecheck` 验证结果。
 
 任何需要决策的问题都会使同步以退出码 1 停止，先把合并回滚到合并前提交，并写入 `sync-needs-human.txt`，其中包含确切的恢复命令。每日 02:00 的定时运行通过 `/etc/cron.d/deepseek-sync` 安装，并把输出追加到仓库根目录的 `sync.log`。

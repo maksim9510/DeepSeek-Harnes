@@ -22,7 +22,14 @@ Protected local work
 
 How the sync works
 ------------------
-1. Verify the working tree is clean and on ``master``; abort otherwise.
+1. Verify the working tree is clean and the layout is the sync layout
+   (local ``master``; ``origin`` = upstream; ``personal`` = the fork).
+   A fresh ``git clone`` of the fork — one ``origin`` remote pointing at the
+   fork, checked out on the fork's ``main``, no local ``master`` — is
+   repaired in place automatically: ``master`` is created at the fork's
+   ``main``, ``origin`` is repointed at upstream, and ``personal`` is added
+   for the fork.  ``master`` is then fast-forwarded onto the fork's ``main``
+   whenever the fork moved ahead on its own.  Anything else aborts.
 2. ``git fetch origin`` (upstream) and ``git fetch personal`` (the fork).
 3. If ``master`` already contains ``origin/master``, everything is synced;
    push ``master`` to the fork's ``main`` and exit 0.
@@ -55,13 +62,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 UPSTREAM_REMOTE = "origin"
 FORK_REMOTE = "personal"
 UPSTREAM_BRANCH = "master"
 LOCAL_BRANCH = "master"
 FORK_MAIN_BRANCH = "main"
+
+UPSTREAM_URL = "https://github.com/deepseek-ai/deepseek-harness.git"
+#: (owner, repo) pairs in lowercase; GitHub repo ids are case-insensitive.
+UPSTREAM_OWNER_REPO = ("deepseek-ai", "deepseek-harness")
+FORK_OWNER_REPO = ("maksim9510", "deepseek-harnes")
+#: SSH form used for the fork remote: the sync's own error texts assume an
+#: SSH key, and the fork clone the self-heal handles arrives over https.
+FORK_SSH_URL = "git@github.com:maksim9510/DeepSeek-Harnes.git"
 
 #: Repository root, resolved from this script's location so the cron entry
 #: does not depend on the caller's working directory.
@@ -327,6 +342,82 @@ def ensure_clean_tree() -> Optional[str]:
     return None
 
 
+def git_remote_url(name: str) -> Optional[str]:
+    """Return a remote's URL, or None when the remote does not exist."""
+    code, out = run_capture(["git", "remote", "get-url", name])
+    return out.strip() if code == 0 else None
+
+
+def _remote_repo_id(url: str) -> Optional[Tuple[str, str]]:
+    """Lowercase (owner, repo) of a github.com remote URL.
+
+    Accepts ``https://github.com/owner/repo``, ``https://owner:token@github.com/
+    owner/repo``, and ``git@github.com:owner/repo``; returns None for a
+    non-GitHub URL or a malformed one.
+    """
+    match = re.search(r"(?:github\.com[/:])([^/]+)/([^/\s]+?)(?:\.git)?$", url)
+    if not match:
+        return None
+    return match.group(1).lower(), match.group(2).lower()
+
+
+def ensure_fork_is_origin() -> Optional[str]:
+    """Return a problem, or None after fixing the sync layout in place.
+
+    The canonical sync layout is ``origin`` = upstream and ``personal`` =
+    the fork.  A fresh ``git clone`` of the fork arrives with only one
+    remote, ``origin``, pointing at the fork, and checked out on the fork's
+    ``main``.  When the checkout is exactly that shape, the layout is
+    repaired in place: the local ``master`` branch is created at the fork's
+    ``main``, ``origin`` is repointed at upstream, ``personal`` is added for
+    the fork, and the sync continues from there.  Any other layout — an
+    ``origin`` that is neither upstream nor the fork, uncommitted changes,
+    or a history with no fork ``main`` — stays a human problem.
+    """
+    url = git_remote_url("origin")
+    if url is None:
+        return None  # no origin at all; fetch_remotes() reports it later
+    repo_id = _remote_repo_id(url)
+    if repo_id is None or repo_id == UPSTREAM_OWNER_REPO:
+        return None  # origin is upstream (canonical) or not GitHub: nothing to heal
+    if repo_id != FORK_OWNER_REPO:
+        return (
+            f"origin указывает на {url}, который не является ни апстримом"
+            f" ({UPSTREAM_URL}), ни форком ({FORK_SSH_URL})."
+            " Проверьте remote вручную: git remote -v"
+        )
+
+    # origin points at the fork: heal into the canonical layout.
+    log_step("origin указывает на форк (свежий клон); привожу к рабочему раскладу")
+    code, out = run_capture(["git", "fetch", "origin"])
+    if code != 0:
+        return f"git fetch origin (клон форка) не удался:\n{out.strip()}"
+    code, out = run_capture(["git", "rev-parse", "--verify", "--quiet",
+                             f"origin/{FORK_MAIN_BRANCH}"])
+    if code != 0:
+        return (
+            f"У клона форка нет ветки {FORK_MAIN_BRANCH} (origin/{FORK_MAIN_BRANCH})."
+            " Синхронизация требует, чтобы у форка была ветка main."
+        )
+    code, out = run_capture(["git", "rev-parse", "--verify", "--quiet", LOCAL_BRANCH])
+    if code != 0:
+        # No local master: create it at the fork's main tip.  The fork's main
+        # already carries every protected marker (they are tracked), and any
+        # upstream commits it lacks are merged in the normal flow below.
+        run(["git", "branch", LOCAL_BRANCH, f"origin/{FORK_MAIN_BRANCH}"])
+        log_ok(f"локальная ветка {LOCAL_BRANCH} создана на основе origin/{FORK_MAIN_BRANCH}")
+    code, out = run_capture(["git", "rev-parse", "--abbrev-ref", "HEAD"])
+    if code != 0 or out.strip() != LOCAL_BRANCH:
+        run(["git", "checkout", LOCAL_BRANCH])
+        log_ok(f"переключено на ветку {LOCAL_BRANCH}")
+    run(["git", "remote", "set-url", "origin", UPSTREAM_URL])
+    log_ok(f"origin переуказан на апстрим ({UPSTREAM_URL})")
+    run(["git", "remote", "add", FORK_REMOTE, FORK_SSH_URL])
+    log_ok(f"добавлен remote {FORK_REMOTE} → {FORK_SSH_URL}")
+    log_ok("расклад приведён к рабочему: origin = апстрим, personal = форк, master = main форка")
+    return None
+
+
 def restore_drifted_lockfile() -> bool:
     """Restore a lockfile that a global pnpm older than the pin rewrote.
 
@@ -415,6 +506,40 @@ def fetch_remotes() -> Optional[str]:
                 f"{out.strip()}\n"
                 "  Проверьте сеть и SSH-ключ, затем повторите: python3 DeepSeek-sync.py"
             )
+    return None
+
+
+def align_master_with_fork() -> Optional[str]:
+    """Fast-forward local master onto the fork's main when master is behind.
+
+    master must carry every commit on the fork's main: upstream is an
+    ancestor of fork main, so a master that misses fork commits would
+    re-merge them and fight the fork's history on the push to main.  When
+    master is not ahead of fork main and differs from it, master is behind
+    and is fast-forwarded.  Returns a problem or None.  Callers run this
+    after both remotes are fetched; fetch_remotes() guarantees the
+    personal/main ref exists.
+    """
+    code, out = run_capture(["git", "rev-list", "--count",
+                             f"{FORK_REMOTE}/{FORK_MAIN_BRANCH}..{LOCAL_BRANCH}"])
+    if code != 0:
+        return f"git rev-list {FORK_REMOTE}/{FORK_MAIN_BRANCH}..{LOCAL_BRANCH} не удался"
+    if out.strip() != "0":
+        return None  # master is ahead of fork main; nothing to align
+    code, out = run_capture(["git", "rev-list", "--count",
+                             f"{LOCAL_BRANCH}..{FORK_REMOTE}/{FORK_MAIN_BRANCH}"])
+    if code != 0:
+        return f"git rev-list {LOCAL_BRANCH}..{FORK_REMOTE}/{FORK_MAIN_BRANCH} не удался"
+    if out.strip() == "0":
+        return None  # master and fork main are equal
+    log(f"Форк main впереди master на {out.strip()} коммит(ов); выравниваю master")
+    code, out = run_capture(["git", "merge", "--ff-only",
+                             f"{FORK_REMOTE}/{FORK_MAIN_BRANCH}"])
+    if code != 0:
+        return (
+            f"Не удалось выровнять {LOCAL_BRANCH} до {FORK_REMOTE}/{FORK_MAIN_BRANCH}"
+            f" (fast-forward):\n{out.strip()}"
+        )
     return None
 
 
@@ -698,6 +823,14 @@ def _sync() -> int:
         write_human_report("Синхронизация остановлена: голый pnpm отличается от пина", [problem])
         return 1
 
+    # A fresh clone of the fork has no master, and its only remote (origin)
+    # points at the fork.  Heal that layout before the clean-tree check, so
+    # the sync can run straight after `git clone` of the fork.
+    problem = ensure_fork_is_origin()
+    if problem:
+        write_human_report("Синхронизация остановлена: расклад репозитория", [problem])
+        return 1
+
     problem = ensure_clean_tree()
     if problem:
         write_human_report("Синхронизация остановлена: рабочее дерево", [problem])
@@ -706,6 +839,16 @@ def _sync() -> int:
     problem = fetch_remotes()
     if problem:
         write_human_report("Синхронизация остановлена: сеть/доступ", [problem])
+        return 1
+
+    # The fork's main may carry commits that local master has not seen yet
+    # (for example, the sync script was updated and pushed through main).
+    # master must be fast-forwarded onto fork main before the upstream
+    # comparison, so those commits are never re-merged and the push to main
+    # stays a fast-forward.
+    problem = align_master_with_fork()
+    if problem:
+        write_human_report("Синхронизация остановлена: выравнивание master с main форка", [problem])
         return 1
 
     ahead = run_capture(["git", "rev-list", "--count",

@@ -59,6 +59,8 @@ Astra Linux is Debian-based but ships an npm older than the project toolchain ne
 python3 DeepSeek-sync.py
 ```
 
+The sync repairs the checkout layout automatically: a fresh `git clone` of the fork — one `origin` remote pointing at the fork, checked out on `main`, no local `master` — is brought to the sync layout in place (a local `master` is created at the fork's `main`, `origin` is repointed at upstream, and the fork is added as `personal`), and `master` is fast-forwarded onto the fork's `main` whenever the fork moved ahead on its own. Run the sync from the same checkout every time; the sync script is part of the fork, so pull the fork's `main` first to get the latest version of the script itself.
+
 The sync protects the fork's local work — the Russian README, the Russian web localization, the installer, and the lockfile fix — through a marker audit before and after the merge. It auto-repairs what it can decide safely: a lockfile drifted by the merge, and ru dictionary keys added or removed by upstream (parsed from the typecheck output, up to three repair rounds, with translations from its built-in table and the upstream English text as fallback). It verifies the result with `pnpm install --frozen-lockfile` and `pnpm run typecheck` before pushing.
 
 Anything that needs a decision stops the sync with exit code 1, rolls the merge back to the pre-merge commit, and writes `sync-needs-human.txt` with the exact recovery commands. A daily run at 02:00 is installed through `/etc/cron.d/deepseek-sync` and appends its output to `sync.log` in the repository root.
