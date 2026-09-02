@@ -154,4 +154,5 @@ export const ru = {
   'terminal.sendInput': '(отправить ввод)',
   'terminal.session': 'Терминал {sessionId}',
   'queue.image': 'Изображение в очереди сообщений',
+  'tool.title.readImage': "Read image",
 } satisfies Record<LocaleNamespaceMap['conversation'], string>
