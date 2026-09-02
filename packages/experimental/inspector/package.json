@@ -55,7 +55,7 @@
     "@deepseek-ai/dsh-host-webserver": "workspace:^",
     "@types/ws": "^8.18.1",
     "playwright": "^1.62.1",
-    "tsx": "^4.23.4"
+    "tsx": "^4.23.5"
 
   }
 }
