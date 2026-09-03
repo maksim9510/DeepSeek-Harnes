@@ -31,7 +31,7 @@
     "@yarnpkg/parsers": "^3.1.0",
     "acorn": "^8.17.0",
     "buffer": "^6.0.3",
-    "picomatch": "^4.0.5",
+    "picomatch": "^4.0.4",
     "readable-stream": "^4.7.0"
   },
   "peerDependencies": {
@@ -57,7 +57,7 @@
     "@deepseek-ai/dsh-subagent": "workspace:^",
     "@deepseek-ai/dsh-subprocess-local": "workspace:^",
     "@deepseek-ai/node-addon-landlock-run": "workspace:^",
-    "@types/picomatch": "^4.0.3",
+    "@types/picomatch": "^3.0.2",
     "@types/readable-stream": "^4.0.24",
     "chokidar": "^5.0.0"
   },
