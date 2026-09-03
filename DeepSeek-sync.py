@@ -305,7 +305,7 @@ def regenerate_lockfile() -> bool:
     log("Regenerating the lockfile")
     for attempt in (1, 2):
         code, _ = run_capture(
-            ["corepack", "pnpm", "install", "--no-frozen-lockfile", "--lockfile-only"],
+            _pnpm_command() + ["install", "--no-frozen-lockfile", "--lockfile-only"],
             env={"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"},
             cwd=str(REPO_ROOT),
         )
@@ -635,7 +635,7 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
     for attempt in (1, 2, 3):
         log_step(f"Проверка типов (попытка {attempt})")
         code, out = run_capture(
-            ["corepack", "pnpm", "run", "typecheck"],
+            _pnpm_command() + ["run", "typecheck"],
             env={"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0", "CI": "true"},
             cwd=str(REPO_ROOT),
         )

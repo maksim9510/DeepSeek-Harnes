@@ -1011,7 +1011,7 @@ def _regenerate_lockfile(source_dir: Path) -> bool:
     attempts = 0
     while attempts < 2:
         proc = run(
-            ["corepack", "pnpm", "install", "--no-frozen-lockfile", "--lockfile-only"],
+            _pnpm_command() + ["install", "--no-frozen-lockfile", "--lockfile-only"],
             env={"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"},
             cwd=str(source_dir),
         )
