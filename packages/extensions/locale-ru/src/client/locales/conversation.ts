@@ -95,6 +95,7 @@ export const ru = {
   'row.inspect': 'Просмотр',
   'tool.title.search': 'Поиск',
   'tool.title.read': 'Чтение',
+  'tool.title.readImage': 'Чтение изображения',
   'tool.title.bash': 'Bash',
   'tool.title.write': 'Запись',
   'tool.title.edit': 'Редактирование',
