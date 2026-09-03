@@ -460,6 +460,26 @@ def ensure_pnpm_shim() -> Optional[str]:
     report.
     """
     if not has_command("corepack"):
+        # No Corepack: the sync runs pnpm through the bare shim.  A shim
+        # whose version differs from the pin is a risk, not a blocker — an
+        # older pnpm rewrites the lockfile without the workspace overrides,
+        # a newer one can misbehave under the nested `pnpm --filter` calls.
+        # Warn loudly so the human can align the shim, but let the sync try
+        # the fallback for hosts where Corepack is genuinely unavailable.
+        pin = pinned_pnpm_version()
+        path = shutil.which("pnpm")
+        if pin and path and "corepack" not in os.path.realpath(path):
+            code, out = run_capture(["pnpm", "--version"])
+            version = parse_version(out if code == 0 else "")
+            if version != pin:
+                version_text = ".".join(str(p) for p in version) if version else "unknown"
+                pin_text = ".".join(str(p) for p in pin)
+                log_warn(
+                    f"Corepack отсутствует, и голый pnpm {version_text} в {path} не совпадает с"
+                    f" закреплённым {pin_text}. Версия-старее-10 перезапишет pnpm-lock.yaml без"
+                    " workspace overrides; установите Corepack и активируйте пиновую версию,"
+                    " чтобы избежать нестабильности lockfile."
+                )
         return None  # a standalone pnpm self-switches when no Corepack env exists
     path = shutil.which("pnpm")
     if path is None or "corepack" in os.path.realpath(path):
@@ -779,13 +799,42 @@ def upstream_english_text(key: str) -> Optional[str]:
 
 
 def push_to_main() -> Optional[str]:
-    """Push master to the fork's main branch.  Returns a problem or None."""
-    code, out = run_capture(["git", "push", FORK_REMOTE, f"{LOCAL_BRANCH}:{FORK_MAIN_BRANCH}"])
+    """Push master to the fork's main branch.  Returns a problem or None.
+
+    A remote that moved ahead rejects a non-fast-forward push.  Pull the
+    fork's main tip into master first so a later sync never requires a
+    manual `git merge`; only merge topologies without conflicts are folded
+    in automatically — a conflicted merge still stops for the human.
+    """
+    code, out = run_capture(
+        ["git", "push", FORK_REMOTE, f"{LOCAL_BRANCH}:{FORK_MAIN_BRANCH}"]
+    )
+    if code == 0:
+        return None
+    log_step(f"Push отклонён; подтягиваю {FORK_REMOTE}/{FORK_MAIN_BRANCH} в {LOCAL_BRANCH}")
+    fetch_code, fetch_out = run_capture(["git", "fetch", FORK_REMOTE])
+    if fetch_code != 0:
+        return (
+            f"git fetch {FORK_REMOTE} не удался после отклонённого push:\n"
+            f"{fetch_out.strip()}\n"
+            f"  Команда для повторения: git push {FORK_REMOTE} {LOCAL_BRANCH}:{FORK_MAIN_BRANCH}"
+        )
+    merge_code, merge_out = run_capture(
+        ["git", "merge", "--no-edit", f"{FORK_REMOTE}/{FORK_MAIN_BRANCH}"]
+    )
+    if merge_code != 0:
+        return (
+            f"git merge {FORK_REMOTE}/{FORK_MAIN_BRANCH} не удался после отклонённого push:\n"
+            f"{merge_out.strip()}\n"
+            "  Разрешите конфликты, зафиксируйте merge и запустите sync снова."
+        )
+    code, out = run_capture(
+        ["git", "push", FORK_REMOTE, f"{LOCAL_BRANCH}:{FORK_MAIN_BRANCH}"]
+    )
     if code != 0:
         return (
-            f"git push {FORK_REMOTE} {LOCAL_BRANCH}:{FORK_MAIN_BRANCH} не удался:\n"
-            f"{out.strip()}\n"
-            "  Если remote ушёл вперёд: git fetch personal && git merge personal/main"
+            f"Повторный git push {FORK_REMOTE} {LOCAL_BRANCH}:{FORK_MAIN_BRANCH} не удался:\n"
+            f"{out.strip()}"
         )
     return None
 
