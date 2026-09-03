@@ -33,6 +33,7 @@ import type { ModelSelection } from '@deepseek-ai/dsh-agent'
 import type {
   AnthropicResponse,
   ChatCompletionResponse,
+  CitationAnnotation,
 } from './types.ts'
 
 /** Stable id this provider registers under. */
@@ -245,6 +246,22 @@ function buildHeaders(api: string | undefined, apiKey: string): Record<string, s
   return headers
 }
 
+/** True when the wire object carries a `url_citation` annotation with a URL. */
+function isUrlCitationAnnotation(value: unknown): value is CitationAnnotation {
+  if (typeof value !== 'object' || value === null) {
+    return false
+  }
+  const candidate = value as { type?: unknown; url_citation?: unknown }
+  if (candidate.type !== 'url_citation') {
+    return false
+  }
+  const urlCitation = candidate.url_citation
+  if (typeof urlCitation !== 'object' || urlCitation === null) {
+    return false
+  }
+  return typeof (urlCitation as { url?: unknown }).url === 'string'
+}
+
 /** Parse the provider response into a normalized search result. */
 function parseResponse(api: string | undefined, payload: unknown): WebSearchResult {
   if (api === ANTHROPIC_MESSAGES_API) {
@@ -252,10 +269,9 @@ function parseResponse(api: string | undefined, payload: unknown): WebSearchResu
   }
   const completion = payload as ChatCompletionResponse
   const message = completion.choices?.[0]?.message
-  const annotations = message?.annotations ?? []
+  const annotations: unknown[] = message?.annotations ?? []
   const citations = annotations
-    .filter((annotation): annotation is { type: 'url_citation'; url_citation: { url: string; title?: string | null; content?: string | null } } =>
-      annotation?.type === 'url_citation' && annotation.url_citation?.url != null)
+    .filter(isUrlCitationAnnotation)
     .map(annotation => annotation.url_citation)
   if (citations.length === 0) {
     throw new WebError(
@@ -289,9 +305,12 @@ export class RouterAiSearchProvider implements WebSearchProvider {
 
   available(): boolean {
     const options = this.resolveOptions()
-    return options.currentSelection !== undefined
-      && options.resolveRoute !== undefined
-      && options.resolveApiKey !== undefined
+    const selection = options.currentSelection()
+    if (selection === undefined) {
+      return false
+    }
+    const route = options.resolveRoute(selection.provider)
+    return route !== undefined
       && isPositiveInteger(options.maxTokens ?? ROUTERAI_DEFAULT_MAX_TOKENS)
       && isPositiveInteger(options.maxUses ?? ROUTERAI_DEFAULT_MAX_USES)
   }

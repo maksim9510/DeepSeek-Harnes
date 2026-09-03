@@ -152,8 +152,8 @@ export function apply(ctx: Context, config: Config): void {
     const currentSelection = (): { provider: string; model: string } | undefined => {
       const agent = ctx.get('agents')?.currentInitiator()
       const header = agent?.session.requestHeader()?.config
-      if (header?.provider !== undefined && header.provider.length > 0
-        && header.model !== undefined && header.model.length > 0) {
+      if (header?.provider && header.provider.length > 0
+        && header.model && header.model.length > 0) {
         return { provider: header.provider, model: header.model }
       }
       const defaultModel = ctx.get('agentDefaultModel')?.currentSelection()

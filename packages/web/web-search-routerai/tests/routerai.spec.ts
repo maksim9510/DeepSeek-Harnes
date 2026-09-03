@@ -114,7 +114,7 @@ describe('RouterAiSearchProvider request mapping', () => {
     const headers = init.headers as Record<string, string>
     expect(headers['authorization']).toBe('Bearer rai-key')
     expect(headers['content-type']).toBe('application/json')
-    const body = JSON.parse(init.body as string)
+    const body = JSON.parse(init.body as string) as Record<string, unknown>
     expect(body).toEqual({
       model: 'deepseek/deepseek-v4-flash-0731',
       max_tokens: 4096,
@@ -240,7 +240,7 @@ describe('web-search-routerai plugin registration', () => {
     // the provider itself never needs it (all facts come from the thunk),
     // but the real composition mounts one and the plugin must tolerate it.
     const fiber = await ctx.plugin(plugin, {})
-    expect(ctx.web.search).toBeTypeOf('function')
+    expect(typeof ctx.web.search).toBe('function')
     await fiber.dispose()
     await expect(ctx.web.search({ query: 'q' }))
       .rejects.toThrow(expect.objectContaining({ code: 'WEB_PROVIDER_CONFIGURED_MISSING' }))
@@ -312,7 +312,7 @@ describe('RouterAiSearchProvider anthropic-messages protocol', () => {
     expect(headers['authorization']).toBe('Bearer anthropic-key')
     expect(headers['x-api-key']).toBe('anthropic-key')
     expect(headers['anthropic-version']).toBe('2023-06-01')
-    const body = JSON.parse(init.body as string)
+    const body = JSON.parse(init.body as string) as Record<string, unknown>
     expect(body).toEqual({
       model: 'deepseek/deepseek-v4-flash-0731',
       max_tokens: 4096,
