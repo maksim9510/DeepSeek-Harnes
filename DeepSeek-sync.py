@@ -15,10 +15,6 @@ Protected local work
   packages/bundle/web-app/cordis.patch.yml, tsconfig paths, package deps)
 * The universal installer (DeepSeek-install.py and its docs)
 * The lockfile fix that keeps pnpm install working
-* The current-chat-model web search provider
-  (packages/web/web-search-routerai, its composition row in
-  packages/bundle/base/cordis.patch.yml, the base bundle dependency, and
-  the tsconfig path registrations)
 
 How the sync works
 ------------------
@@ -62,7 +58,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 UPSTREAM_REMOTE = "origin"
 FORK_REMOTE = "personal"
@@ -100,15 +96,6 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("packages/bundle/web-app/package.json", "@deepseek-ai/dsh-client-locale-ru"),
     ("pnpm-workspace.yaml", "overrides:"),
     ("package.json", "pnpm@"),
-    # The current-chat-model web search provider.  The provider package is
-    # untracked until the fork commits it, so the marker audit keys on the
-    # tracked registrations: the composition row, the base bundle dependency,
-    # and the tsconfig paths.  A lost registration after a merge means the
-    # fork silently fell back to upstream's search wiring.
-    ("packages/bundle/base/cordis.patch.yml", "web-search-routerai"),
-    ("packages/bundle/base/package.json", "@deepseek-ai/dsh-web-search-routerai"),
-    ("tsconfig.base.json", "@deepseek-ai/dsh-web-search-routerai"),
-    ("tsconfig.host.json", "packages/web/web-search-routerai"),
 ]
 
 #: Locale dictionaries the ru language pack owns, relative to the ru package's
@@ -265,13 +252,6 @@ def check_protected_markers(phase: str) -> List[str]:
             continue
         if marker not in text:
             lost.append(f"{rel_path}: marker not found: {marker!r}")
-    # The provider package directory itself: its tracked registrations can
-    # survive a merge while the untracked source tree disappears (a fresh
-    # checkout of the fork would not carry it).  The package.json anchor
-    # doubles as the marker for the whole untracked directory.
-    provider_pkg = REPO_ROOT / "packages/web/web-search-routerai/package.json"
-    if not provider_pkg.exists():
-        lost.append("packages/web/web-search-routerai/: package directory missing")
     return lost
 
 
@@ -616,9 +596,6 @@ def merge_upstream() -> Tuple[bool, Optional[str]]:
         f"  git merge origin/{UPSTREAM_BRANCH}",
         "  # разрешите конфликты в перечисленных файлах, сохранив наши правки:",
         "  #   README.md (русский), packages/extensions/locale-ru, DeepSeek-install.py,",
-        "  #   packages/web/web-search-routerai (поиск через текущую модель),",
-        "  #   packages/bundle/base/cordis.patch.yml (searchProvider: routerai),",
-        "  #   tsconfig.base.json / tsconfig.host.json (регистрация пакета)",
         "  git add <файлы> && git commit",
         "  python3 DeepSeek-sync.py   # продолжит: проверки и пуш в main",
     ]

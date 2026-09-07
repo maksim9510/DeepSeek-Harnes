@@ -435,24 +435,20 @@
 
     # The shared base enables the stable model-facing web_search and web_fetch
     # tools. The Web app disables this host row and composes both tools per agent
-    # preset; products with a stricter network policy override tool-web. Search
-    # reuses the chat provider the current Agent speaks to: the routerai provider
-    # resolves the Agent's active provider/model (session request header, falling
-    # back to agent-default-model), reads the route's endpoint/credential facts
-    # from the llm-pi-ai settings section, and drives a native server-side search
-    # tool on that provider's own endpoint — no separate search credential is
-    # needed. Anonymous fetch accepts only public HTTP(S) destinations, resolves
-    # and validates every destination, and pins every actual connection. Search is
-    # a full auxiliary model request with server-side retrieval, so this shipped
-    # route gets 60s while the provider-neutral tool default remains 30s.
+    # preset; products with a stricter network policy override tool-web. DeepSeek
+    # search resolves the same DEEPSEEK_API_KEY
+    # credential the Models page manages for chat, at each search; its Messages
+    # endpoint is separate from the chat-completions endpoint, so it takes its own
+    # base-URL override. Anonymous fetch accepts only public HTTP(S) destinations,
+    # resolves and validates every destination, and pins every actual connection.
+    # Search is a full auxiliary model request with server-side retrieval, so this
+    # shipped DeepSeek route gets 60s while the provider-neutral tool default
+    # remains 30s.
     - id: web
       name: '@deepseek-ai/dsh-web'
       config:
-        searchProvider: routerai
+        searchProvider: deepseek-official
         fetchProvider: http
-
-    - id: web-search-routerai
-      name: '@deepseek-ai/dsh-web-search-routerai'
 
     - id: web-search-deepseek
       name: '@deepseek-ai/dsh-web-search-deepseek'
