@@ -123,6 +123,26 @@ RU_LOCALES_DIR = "packages/extensions/locale-ru/src/client/locales"
 RU_TRANSLATIONS = {
     'chat.turnNavigation.jumpLoad': 'Загрузить и перейти к ходу {turn}',
     'queue.image': 'Изображение в очереди сообщений',
+    'notice.attachmentsUnsupported': '/{command} не принимает вложения; сначала удалите их',
+    'command.attachmentsUnsupported': '/{command} не принимает вложения; сначала удалите их',
+    'layout.fileAttachments': 'Файлы ×{count}',
+    'attachment.pending': 'Вложения, ожидающие отправки',
+    'attachment.scrollLeft': 'Прокрутить вложения влево',
+    'attachment.scrollRight': 'Прокрутить вложения вправо',
+    'attachment.dropTitle': 'Перетащите файлы или изображения сюда, чтобы добавить',
+    'attachment.dropDesc': 'До {count} изображений, по {size} каждое',
+    'attachment.dropBlocked': 'Сейчас нельзя добавить файлы и изображения',
+    'file.attach': 'Добавить вложение',
+    'file.pending': 'Файлы, ожидающие отправки',
+    'file.remove': 'Удалить файл {name}',
+    'file.uploading': 'Загрузка…',
+    'file.uploadFailed': 'Загрузка не удалась; нажмите, чтобы повторить',
+    'file.retry': 'Повторить загрузку {name}',
+    'file.stillUploading': 'Файлы всё ещё загружаются; отправьте после завершения',
+    'file.sessionUnavailable': 'Сессия недоступна; файлы не могут быть загружены',
+    'file.notStaged': 'Файл не загружен; добавьте его заново и попробуйте снова',
+    'file.label': 'Файл',
+    'queue.file': 'Файл в очереди: {name}',
 }
 
 

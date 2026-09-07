@@ -12,5 +12,5 @@ export const ru = {
   'status.empty': 'Нет вариантов',
   'overlay.aria': 'Варианты /{command}',
   'listbox.aria': 'Совпадения для /{command}',
-  'notice.imagesUnsupported': '/{command} не принимает изображения; сначала удалите их',
+  'notice.attachmentsUnsupported': '/{command} не принимает вложения; сначала удалите их',
 } satisfies Record<LocaleNamespaceMap['command'], string>

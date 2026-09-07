@@ -174,6 +174,7 @@ export const ru = {
   'layout.compacted': 'Контекст сжат',
   'layout.toolCallOnly': 'Только вызов инструмента',
   'layout.imageOnly': 'Изображения ×{count}',
+  'layout.fileAttachments': 'Файлы ×{count}',
   'layout.initialSystemPrompt': 'Начальный системный промпт',
   'layout.systemPromptUpdated': 'Системный промпт обновлён',
   'layout.toolsUpdated': 'Инструменты обновлены',
