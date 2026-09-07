@@ -671,8 +671,12 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
     # 4. Fast repository gates: typecheck compiles our locale pack together
     #    with upstream code.  Locale-key drift (upstream adds or removes
     #    dictionary keys) is repaired automatically and the typecheck
-    #    reruns; anything else is a human problem.
-    for attempt in (1, 2, 3):
+    #    reruns; anything else is a human problem.  Each adaptation can
+    #    surface further errors (TypeScript reports excess-property errors
+    #    that hide missing-property errors), so the loop runs a fresh
+    #    typecheck after every adaptation — including the last one.
+    max_attempts = 5
+    for attempt in range(1, max_attempts + 1):
         log_step(f"Проверка типов (попытка {attempt})")
         code, out = run_capture(
             _pnpm_command() + ["run", "typecheck"],
@@ -693,6 +697,12 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
                 " правками на уровне типов. Требуется ручное разрешение."
             ), True
 
+        if attempt == max_attempts:
+            # Exhausted adaptations; one last verification already failed.
+            return False, (
+                "typecheck не прошёл после пяти попыток адаптации ru-локалей."
+            ), True
+
         log_step("Апстрим изменил ключи локализации; адаптирую ru-словари автоматически")
         if not adapt_ru_dictionaries(errors):
             unknown = "\n".join(f"  {e}" for e in errors)
@@ -704,7 +714,7 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
         if code != 0:
             return False, f"git add {RU_LOCALES_DIR} не удался", True
 
-    return False, "typecheck не прошёл после трёх попыток адаптации", True
+    return False, "typecheck не прошёл после попыток адаптации", True
 
 
 def parse_locale_key_errors(output: str) -> List[Tuple[str, str, str]]:
