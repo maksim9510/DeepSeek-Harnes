@@ -580,10 +580,22 @@ def merge_upstream() -> Tuple[bool, Optional[str]]:
     if code == 0:
         return True, None
 
-    # Conflict: collect the file list, abort, report for a human.
+    # Distinguish a real conflict (exit 1 with conflicted paths) from any
+    # other merge failure (exit 128: no committer identity, bad ref, ...);
+    # reporting the actual output is the only way a human can fix it.
     _, conflicted = run_capture(["git", "diff", "--name-only", "--diff-filter=U"])
-    run(["git", "merge", "--abort"])
     files = [f for f in conflicted.strip().splitlines() if f]
+    if code != 1 or not files:
+        run(["git", "merge", "--abort"])
+        return False, (
+            "git merge origin/master не удался (не конфликт слияния):\n"
+            f"{out.strip()}\n"
+            "  Устраните причину (например, настройте git identity:"
+            " git config --global user.name / user.email) и запустите sync снова."
+        )
+
+    # Conflict: collect the file list, abort, report for a human.
+    run(["git", "merge", "--abort"])
     detail = [
         "Слияние origin/master вызвало конфликты в файлах, где автоматическое"
         " решение небезопасно. Список конфликтных файлов:",
