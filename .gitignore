@@ -44,6 +44,7 @@ apps/web/dist/
 worktrees/
 .agents/worktrees/
 .typert-*/
+native/system/test/bin/
 
 # DeepSeek-sync.py runtime artifacts
 sync-needs-human.txt
