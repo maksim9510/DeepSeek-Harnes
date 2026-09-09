@@ -33,7 +33,7 @@
       "path": "../../client/ui-conversation"
     },
     {
-      "path": "../../client/ui-deliverables"
+      "path": "../../client/ui-deliverables/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-directory-picker-browse"

@@ -1,10 +1,44 @@
-/** ru dictionary for the `deliverables` namespace: the produced-files row's copy. */
+/** ru dictionary for the `deliverables` namespace: the produced-files row and its file-presentation copy. */
 
 import type {} from '@deepseek-ai/dsh-client-ui-deliverables/client'
 import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 
 /** Russian dictionary, checked complete against the deliverables namespace key union. */
 export const ru = {
+  'presented.nativeUnavailable': 'У этого файла нет доступного пути на хосте; откройте предпросмотр в боковой панели',
+  'presented.revealError': 'Не удалось показать в файловом менеджере. Попробуйте ещё раз.',
+  'presented.directoryError': 'Не удалось открыть папку файла. Попробуйте ещё раз.',
+  'presented.directoryOpening': 'Открытие папки файла…',
+  'presented.directoryOpened': 'Запрошено открытие папки файла',
+  'presented.revealed': 'Запрошен показ в файловом менеджере',
+  'presented.revealing': 'Показ в файловом менеджере…',
+  'presented.unavailable': 'На этом хосте нет доступного рабочего стола для открытия файлов или папок',
+  'presented.retry': 'Повторить',
+  'presented.hostError': 'Не удалось получить сведения о рабочем столе хоста',
+  'presented.directory': 'Открыть папку файла',
+  'presented.explorer': 'Показать в Проводнике',
+  'presented.finder': 'Показать в Finder',
+  'presented.defaultApp': 'Открыть в приложении по умолчанию',
+  'presented.more': 'Другие действия с файлом {name}',
+  'presented.action': 'Открыть',
+  'presented.preview': 'Предпросмотр в боковой панели',
+  'presented.previewButton': 'Открыть {name} в боковой панели',
+  'presented.previewCard': 'Предпросмотр {name} в боковой панели',
+  'presented.all': 'Все файлы: {count}',
+  'presented.expandAria': 'Показать все {count} переданных файлов',
+  'presented.collapse': 'Свернуть',
+  'presented.collapseAria': 'Свернуть переданные файлы',
+  'presented.opening': 'Открытие…',
+  'presented.opened': 'Открыто в приложении по умолчанию',
+  'presented.error': 'Не удалось открыть. Нажмите, чтобы повторить.',
+  'presented.file': 'Файл',
+  'row.title': 'Переданные файлы',
+  'row.running': 'Передача…',
+  'row.ok': 'Передано',
+  'row.error': 'Передача не удалась',
+  'row.stopped': 'Прервано',
+  'row.inspect': 'Просмотреть вызов',
+  'presented.open': 'Открыть {name} в приложении по умолчанию',
   'produced.label': 'Результаты',
   'produced.moreOne': '+ 1 файл',
   'produced.more': '+ {count} файлов',

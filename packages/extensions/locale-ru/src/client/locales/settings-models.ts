@@ -89,6 +89,7 @@ export const ru = {
   customNeedsBaseUrl: 'Для своего провайдера нужен базовый URL.',
   customNeedsModels: 'Для своего провайдера нужна хотя бы одна модель.',
   customBaseUrlPlaceholder: 'https://gateway.example/v1',
+  customBaseUrlInvalid: 'Введите корректный HTTP- или HTTPS-адрес.',
   settingsPathUnresolvable: 'неразрешимый путь к настройкам',
   create: 'Создать провайдера',
   creating: 'Создание…',

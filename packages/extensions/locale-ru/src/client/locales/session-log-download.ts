@@ -5,7 +5,8 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 
 /** Russian dictionary, checked complete against the session-log-download namespace key union. */
 export const ru = {
-  'header.action': 'Журнал сессии',
+  'header.more': 'Другие действия',
+  'menu.download': 'Скачать журнал сессии',
   'dialog.preparingTitle': 'Экспорт сессии',
   'dialog.preparingDescription': 'Готовится ZIP-архив с текущей сессией, её суб-сессиями и вложениями.',
   'dialog.successTitle': 'Скачивание сессии началось',

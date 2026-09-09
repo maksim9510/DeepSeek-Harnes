@@ -7,6 +7,8 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 export const ru = {
   'command.description': 'Выбрать модель для этой сессии',
   'option.loadError': 'Не удалось загрузить каталог: {message}',
+  'option.deepseekV4Flash.description': 'Быстрая, эффективная и экономичная; подходит для сфокусированных, типовых и параллельных задач.',
+  'option.deepseekV4Pro.description': 'Сильнее в агентном программировании, знаниях и сложных рассуждениях; подходит для комплексных или критичных к качеству задач при большей стоимости.',
   'trigger.fallback': 'Выбрать модель',
   'trigger.loading': 'Загрузка моделей…',
   'trigger.selectAria': 'Выбрать модель',

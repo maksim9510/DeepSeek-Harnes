@@ -9,4 +9,5 @@ export const ru = {
   'session.new.label': 'Новая сессия',
   'toggle.open': 'Открыть боковую панель',
   'toggle.collapse': 'Свернуть боковую панель',
+  'panels.label': 'Глобальные панели',
 } satisfies Record<LocaleNamespaceMap['sidebar'], string>
