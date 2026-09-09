@@ -167,5 +167,7 @@ export const ru = {
   'terminal.session': 'Терминал {sessionId}',
   'queue.image': 'Изображение в очереди сообщений',
   'queue.file': 'Файл в очереди: {name}',
-  'queue.sending': 'Sending…',
+  'queue.sending': 'Отправка…',
+  'input.send.queue': 'Поставить в очередь',
+  'input.send.steer': 'Вставить сообщение',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>

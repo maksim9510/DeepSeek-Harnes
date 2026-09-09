@@ -9,5 +9,4 @@ export const ru = {
   'produced.moreOne': '+ 1 файл',
   'produced.more': '+ {count} файлов',
   'produced.open': 'Открыть {name}',
-  'produced.showInFolder': 'Показать в папке',
 } satisfies Record<LocaleNamespaceMap['deliverables'], string>

@@ -16,4 +16,5 @@ export const ru = {
   'action.resume': 'Возобновить цель',
   'action.edit': 'Изменить цель',
   'action.clear': 'Очистить цель',
+  'phase.active.disarmed': 'Неактивная цель',
 } satisfies Record<LocaleNamespaceMap['goal'], string>
