@@ -95,6 +95,18 @@ pnpm dsh web
 
 Для агентов — следуйте [AGENTS.md](AGENTS.md).
 
+## Цитирование
+
+```bibtex
+@misc{deepseek-harness2026,
+  title={DeepSeek Harness: Everything is a Plugin},
+  author={DeepSeek-AI},
+  year={2026},
+  publisher={GitHub},
+  howpublished={\url{https://github.com/deepseek-ai/deepseek-harness}},
+}
+```
+
 ## Лицензия
 
 [MIT](LICENSE)

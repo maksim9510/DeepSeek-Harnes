@@ -25,8 +25,8 @@ extensions 组让 agent 检查并修改实时 DSH 运行时，而不编辑仓库
 | 包 | 职责 | ctx 键 |
 |---|---|---|
 | [`tool-cordis`](tool-cordis/README.zh.md) | 七个模型侧工具：检查实时运行时，定义、运行、停止并移除动态包 | 注册到 `ctx.tools` |
-| [`cordis-host-runner`](cordis-host-runner/README.zh.md) | host 半：定义注册表、沙箱化的 host 半生命周期，以及浏览器查询应答的 inspect 注册表 | 提供 `ctx.dynamicCordisRunner` 与 `ctx.cordisInspect` |
-| [`cordis-client-runner`](cordis-client-runner/README.zh.md) | 浏览器半：把浏览器半源码求值成活插件，并应答运行请求 | client 面；提供浏览器侧 `ctx.dynamicCordisRunner` |
+| [`cordis-host-runner`](cordis-host-runner/README.zh.md) | host 半：定义注册表、沙箱化的 host 半生命周期，以及用于应答浏览器查询的 inspect 注册表 | 提供 `ctx.dynamicCordisRunner` 与 `ctx.cordisInspect` |
+| [`cordis-client-runner`](cordis-client-runner/README.zh.md) | 浏览器半：将浏览器半源码求值为运行中的插件，并应答运行请求 | client 面；提供浏览器侧 `ctx.dynamicCordisRunner` |
 | [`ui-cordis`](ui-cordis/README.zh.md) | 浏览器面：全局面板、生命周期工具卡片与 `@pluginId` 输入源 | client 面；注册 slot |
 | [`locale-ru`](locale-ru/README.zh.md) | 俄语语言包：可选的 Русский 语言加每个已覆盖命名空间一份 ru 词典 | client 面；注册进 `ctx.locale` |
 
@@ -49,6 +49,6 @@ extensions 组让 agent 检查并修改实时 DSH 运行时，而不编辑仓库
 <details>
 <summary>维护者的工作上下文——点击展开</summary>
 
-两个浏览器半包住在本组而不是 `packages/client/` 下，因为它们是本子系统双半包的其中一半；client 面经由 client program 编译它们，host program 只引用 host runner。
+两个浏览器半包位于本组，而不是 `packages/client/` 下，因为它们分别是本子系统双半包的浏览器半；client 面经由 client program 编译它们，host program 只引用 host runner。
 
 </details>
