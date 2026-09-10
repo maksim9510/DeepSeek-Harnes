@@ -6,7 +6,7 @@ Status: implemented
 
 ## 问题
 
-仓库没有安装脚本：早期的 `scripts/install.sh` 已被[不使用托管安装器从源码运行的决定](../simplification/2026-08-10-source-run-without-managed-installer.zh.md)移除，根 README 只记录了手动步骤（`git clone`、`pnpm install`、`pnpm run build`）。新用户在受支持的发行版上必须手动组装 Node.js、Corepack、pnpm 和系统软件包，而环境损坏时除了原始工具链报错外没有任何诊断。Astra Linux 基于 Debian，但其自带的 npm 比项目工具链需要的版本更旧，手动步骤没有提及这一点。
+仓库没有安装脚本：早期的 `scripts/install.sh` 已被[不使用托管安装器从源码运行的决定](../../archived/simplification/2026-08-10-source-run-without-managed-installer.md)移除，根 README 只记录了手动步骤（`git clone`、`pnpm install`、`pnpm run build`）。新用户在受支持的发行版上必须手动组装 Node.js、Corepack、pnpm 和系统软件包，而环境损坏时除了原始工具链报错外没有任何诊断。Astra Linux 基于 Debian，但其自带的 npm 比项目工具链需要的版本更旧，手动步骤没有提及这一点。
 
 ## 决定
 
@@ -26,7 +26,7 @@ doctor 报告可以 JSON 形式输出（`doctor --json`）以便脚本使用。W
 
 ## 决定：上游同步
 
-仓库还随附 `DeepSeek-sync.py`，它把 `origin/master` 合并到 fork 的 `master` 并推送到 fork 的 `main`。fork 的本地工作（俄语 README、俄语 Web 本地化、安装脚本、锁文件修复）通过合并前后运行的标记审计保护；审计失败的合并结果会回滚到合并前提交，且绝不推送。同步自动修复可以安全决定的问题——锁文件漂移，以及上游新增或删除的 ru 词典键，从 typecheck 输出解析，最多三轮修复，翻译来自内置表并以英文原文作为后备——并以 `pnpm install --frozen-lockfile` 加 `pnpm run typecheck` 作为推送门槛。脚本无法决定的问题会使其以退出码 1 停止，并写入带有确切恢复命令的 `sync-needs-human.txt` 报告。每日 02:00 的定时运行为 `/etc/cron.d/deepseek-sync`，输出追加到 `sync.log`。
+仓库还随附 `DeepSeek-sync.py`，它把 `origin/master` 合并到 fork 的 `master` 并推送到 fork 的 `main`。同步会自动修复检出布局：对 fork 的全新 `git clone`——只有一个指向 fork 的 `origin` remote、检出于 fork 的 `main`、没有本地 `master`——会被原地调整到同步布局（在 fork 的 `main` 上创建本地 `master`、把 `origin` 改指上游 `deepseek-ai/deepseek-harness`、把 fork 添加为 `personal`），并且只要 fork 自行前进了，`master` 就会快进到 fork 的 `main`。fork 的本地工作（俄语 README、俄语 Web 本地化、安装脚本、锁文件修复）通过合并前后运行的标记审计保护；审计失败的合并结果会回滚到合并前提交，且绝不推送。同步自动修复可以安全决定的问题——锁文件漂移，以及上游新增或删除的 ru 词典键，从 typecheck 输出解析，最多三轮修复，翻译来自内置表并以英文原文作为后备——并以 `pnpm install --frozen-lockfile` 加 `pnpm run typecheck` 作为推送门槛。脚本无法决定的问题会使其以退出码 1 停止，并写入带有确切恢复命令的 `sync-needs-human.txt` 报告。每日 02:00 的定时运行为 `/etc/cron.d/deepseek-sync`，输出追加到 `sync.log`。
 
 ## 备选方案
 

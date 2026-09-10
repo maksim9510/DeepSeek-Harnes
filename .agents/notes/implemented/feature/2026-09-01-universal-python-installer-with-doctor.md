@@ -6,7 +6,7 @@ English | [中文](2026-09-01-universal-python-installer-with-doctor.zh.md)
 
 ## Problem
 
-The repository has no installer: the earlier `scripts/install.sh` was removed by the [source-run-without-managed-installer decision](../simplification/2026-08-10-source-run-without-managed-installer.md), and the root README documents manual steps (`git clone`, `pnpm install`, `pnpm run build`). A fresh user on a supported distribution has to assemble Node.js, Corepack, pnpm, and system packages by hand, and a broken environment gives no diagnosis beyond the raw toolchain error. Astra Linux is Debian-based but ships an npm older than the project toolchain needs, which the manual steps do not mention.
+The repository has no installer: the earlier `scripts/install.sh` was removed by the [source-run-without-managed-installer decision](../../archived/simplification/2026-08-10-source-run-without-managed-installer.md), and the root README documents manual steps (`git clone`, `pnpm install`, `pnpm run build`). A fresh user on a supported distribution has to assemble Node.js, Corepack, pnpm, and system packages by hand, and a broken environment gives no diagnosis beyond the raw toolchain error. Astra Linux is Debian-based but ships an npm older than the project toolchain needs, which the manual steps do not mention.
 
 ## Decision
 
