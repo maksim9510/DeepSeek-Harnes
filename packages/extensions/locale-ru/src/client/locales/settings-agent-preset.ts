@@ -30,6 +30,7 @@ export const ru = {
   'displayName': 'Название',
   'displayNamePlaceholder': 'Отображается в списке выбора; по умолчанию используется идентификатор',
   'inUse': 'Используется',
+  'selectionOffDefault': 'По умолчанию',
   'builtInGroup': 'Встроенные',
   'customGroup': 'Свои',
   'noDescription': 'Нет описания.',
@@ -56,4 +57,9 @@ export const ru = {
   'deleteDescription': 'Каталог пресета будет удалён. Сессии, которые уже работают с ним, продолжат работу; новые сессии не смогут его выбрать.',
   'deleteConfirm': 'Удалить',
   'deleting': 'Удаление…',
+  'showPicker': 'Разрешить переключение режимов агента',
+  'showPickerBeta': 'Бета',
+  'showPickerDescription': 'Если включено, новые задачи могут выбирать стандартный, PTC, Creator, минимальный и собственные режимы. Если выключено, все новые задачи используют режим по умолчанию (по умолчанию — стандартный; настраивается). Влияет только на новые задачи.',
+  'enablePickerToSetDefault': 'Сначала включите выбор режима агента, чтобы выбрать режим по умолчанию',
+  'enablePickerToCreate': 'Сначала включите выбор режима агента, чтобы запустить режим Creator',
 } satisfies Record<LocaleNamespaceMap['settings.agentPreset'], string>

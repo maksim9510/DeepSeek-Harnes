@@ -5,6 +5,20 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 
 /** Russian dictionary, checked complete against the command namespace key union. */
 export const ru = {
+  'section.add': 'Добавить',
+  'section.commands': 'Команды',
+  'label.goal': 'Цель',
+  'label.plan': 'План',
+  'label.feedback': 'Обратная связь',
+  'label.compact': 'Сжатие',
+  'label.permission': 'Разрешение',
+  'label.export': 'Экспорт',
+  'token.goal': 'цель',
+  'token.plan': 'план',
+  'token.feedback': 'обратная связь',
+  'token.compact': 'сжатие',
+  'token.permission': 'разрешение',
+  'token.export': 'экспорт',
   'description.compact': 'Сжать более раннюю историю разговора',
   'description.export': 'Скачать журнал этой сессии в ZIP-архиве',
   'description.feedback': 'отправить отзыв об этой сессии',

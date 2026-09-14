@@ -38,7 +38,6 @@ export const ru = {
   'row.error': 'Передача не удалась',
   'row.stopped': 'Прервано',
   'row.inspect': 'Просмотреть вызов',
-  'presented.open': 'Открыть {name} в приложении по умолчанию',
   'produced.label': 'Результаты',
   'produced.moreOne': '+ 1 файл',
   'produced.more': '+ {count} файлов',

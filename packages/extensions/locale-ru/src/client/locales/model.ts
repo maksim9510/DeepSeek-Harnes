@@ -5,6 +5,7 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 
 /** Russian dictionary, checked complete against the model namespace key union. */
 export const ru = {
+  'command.label': 'Модель',
   'command.description': 'Выбрать модель для этой сессии',
   'option.loadError': 'Не удалось загрузить каталог: {message}',
   'option.deepseekV4Flash.description': 'Быстрая, эффективная и экономичная; подходит для сфокусированных, типовых и параллельных задач.',

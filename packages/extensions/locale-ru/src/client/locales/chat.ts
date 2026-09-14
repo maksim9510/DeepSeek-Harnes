@@ -10,6 +10,7 @@ export const ru = {
   'number.groupSeparator': ' ',
   'duration.compactSeconds': '{seconds}с',
   'duration.compactMinutes': '{minutes}мин{seconds}с',
+  'duration.hours': '{hours}ч {minutes}мин {seconds}с',
   'duration.milliseconds': '{milliseconds}мс',
   'stats.counts': 'Ходов: {turns} · Шагов: {steps}',
   'stats.cacheHit': 'Попадание в кэш {percent}%',
