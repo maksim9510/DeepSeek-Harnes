@@ -48,7 +48,6 @@ Exit codes: 0 synced (or nothing to do), 1 needs human intervention,
 
 from __future__ import annotations
 
-import json
 import os
 import re
 import shutil
@@ -56,9 +55,9 @@ import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
-__version__ = "1.2.0"
+__version__ = "1.3.0"
 
 UPSTREAM_REMOTE = "origin"
 FORK_REMOTE = "personal"
@@ -100,9 +99,10 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
 
 #: Locale dictionaries the ru language pack owns, relative to the ru package's
 #: client/locales directory.  When upstream adds or removes keys in the owning
-#: namespace, the sync realigns these dictionaries automatically (added keys
-#: get a Russian translation from RU_TRANSLATIONS or fall back to the English
-#: owner text; removed keys are dropped) and re-records the pairing sidecar.
+#: namespace, the sync realigns these dictionaries automatically with a
+#: deterministic key-union diff (added keys get a Russian translation from
+#: RU_TRANSLATIONS or fall back to the owner's English text; removed keys are
+#: dropped) and re-records the pairing sidecar.
 RU_LOCALES_DIR = "packages/extensions/locale-ru/src/client/locales"
 
 #: Russian translations for keys upstream may add, keyed by the full locale
@@ -130,6 +130,15 @@ RU_TRANSLATIONS = {
     'file.notStaged': 'Файл не загружен; добавьте его заново и попробуйте снова',
     'file.label': 'Файл',
     'queue.file': 'Файл в очереди: {name}',
+    'close': 'Закрыть',
+    'mode': 'Режим доступа, текущий: {name}',
+    'auto.label': 'Автопроверка',
+    'auto.badge': 'ЭКСП',
+    'auto.description': 'Запуск без песочницы; каждый нативный вызов инструмента и внутренний вызов PTC предварительно проверяются той же моделью (экспериментально).',
+    'auto.confirm.title': 'Включить Auto review (экспериментально)?',
+    'auto.confirm.description': 'Auto review не использует песочницу. Перед каждым нативным вызовом инструмента и внутренним вызовом PTC та же модель, что и текущий агент, проводит проверку. Функция пока экспериментальна: возможны ложные допуски и отказы, а также расход дополнительных токенов.',
+    'auto.confirm.acknowledge': 'Я понимаю эти риски и хочу продолжить',
+    'auto.confirm.enable': 'Включить Auto review',
 }
 
 
@@ -659,12 +668,12 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
 
     # 4. Fast repository gates: typecheck compiles our locale pack together
     #    with upstream code.  Locale-key drift (upstream adds or removes
-    #    dictionary keys) is repaired automatically and the typecheck
-    #    reruns; anything else is a human problem.  Each adaptation can
-    #    surface further errors (TypeScript reports excess-property errors
-    #    that hide missing-property errors), so the loop runs a fresh
-    #    typecheck after every adaptation — including the last one.
-    max_attempts = 5
+    #    dictionary keys) is repaired automatically from a deterministic
+    #    key-union diff — every drifted key is seen in one pass, so one
+    #    adaptation and one rerun normally suffice; the loop just guards
+    #    against an imperfect owner mapping.  Anything else is a human
+    #    problem.
+    max_attempts = 3
     for attempt in range(1, max_attempts + 1):
         log_step(f"Проверка типов (попытка {attempt})")
         code, out = run_capture(
@@ -676,8 +685,20 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
             log_ok("typecheck прошёл")
             return True, None, True
 
-        errors = parse_locale_key_errors(out)
-        if not errors:
+        if attempt == max_attempts:
+            # Exhausted adaptations; the last typecheck already failed.
+            drift = locale_drift()
+            if drift:
+                summary = "\n".join(
+                    f"  {rel}: missing={','.join(missing) or '-'} extra={','.join(extra) or '-'}"
+                    for rel, missing, extra in drift
+                )
+                return False, (
+                    "pnpm run typecheck не прошёл после слияния, и остались расхождения"
+                    " ключей ru-локалей, которые скрипт не смог устранить:\n"
+                    f"{summary}\n"
+                    "Требуется ручное разрешение."
+                ), True
             tail = "\n".join(out.strip().splitlines()[-25:])
             return False, (
                 "pnpm run typecheck не удался после слияния:\n"
@@ -686,18 +707,17 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
                 " правками на уровне типов. Требуется ручное разрешение."
             ), True
 
-        if attempt == max_attempts:
-            # Exhausted adaptations; one last verification already failed.
+        log_step("Проверяю расхождения ключей локализации; адаптирую ru-словари автоматически")
+        changed, problems = realign_ru_dictionaries()
+        if not changed:
+            tail = "\n".join(out.strip().splitlines()[-25:])
+            extra = (
+                "\n\nНе удалось добавить ключи:\n" + "\n".join(f"  {p}" for p in problems)
+                if problems else ""
+            )
             return False, (
-                "typecheck не прошёл после пяти попыток адаптации ru-локалей."
-            ), True
-
-        log_step("Апстрим изменил ключи локализации; адаптирую ru-словари автоматически")
-        if not adapt_ru_dictionaries(errors):
-            unknown = "\n".join(f"  {e}" for e in errors)
-            return False, (
-                "Обнаружены изменения ключей локализации, которые не удалось"
-                f" применить автоматически:\n{unknown}"
+                "pnpm run typecheck не прошёл, но расхождений ключей локализации"
+                f" не найдено:\n{tail}{extra}"
             ), True
         code, staged = run_capture(["git", "add", "--", RU_LOCALES_DIR])
         if code != 0:
@@ -706,115 +726,390 @@ def post_merge_checks() -> Tuple[bool, Optional[str], bool]:
     return False, "typecheck не прошёл после попыток адаптации", True
 
 
-def parse_locale_key_errors(output: str) -> List[Tuple[str, str, str]]:
-    """Extract locale-key drift from typecheck output.
+def _dict_block(text: str, var: str) -> Optional[str]:
+    """Body of an ``export const <var> = { ... }`` dictionary literal.
 
-    Returns (kind, key, file) triples: ``kind`` is ``missing`` when the ru
-    dictionary lacks a key the owner namespace requires and ``unknown`` when
-    the ru dictionary carries a key the owner namespace no longer declares;
-    ``file`` is the ru dictionary path the TypeScript error points at.
+    Handles the annotated form (``export const zh: { [K in keyof typeof en]:
+    string } = {``) by locating the ``=`` first; the first ``{`` after it is
+    the literal.  Returns None when the declaration is missing.
     """
-    errors: List[Tuple[str, str, str]] = []
-    file_path = ""
-    patterns = [
-        # TS1360: Property '"chat.foo"' is missing in type ... but required.
-        # TypeScript wraps the key in double quotes inside single quotes, so
-        # both quote layers must be consumed.
-        (re.compile(r"Property ['\"]+([^'\"]+)['\"]+ is missing in type"), "missing"),
-        # TS2353: '...' does not exist in type 'Record<...>'; same double
-        # quoting applies.
-        (re.compile(r"and ['\"]+([^'\"]+)['\"]+ does not exist in type"), "unknown"),
+    match = re.search(r"export const " + re.escape(var) + r"\b", text)
+    if not match:
+        return None
+    eq = text.find("=", match.end())
+    if eq == -1:
+        return None
+    brace = text.find("{", eq)
+    if brace == -1:
+        return None
+    depth = 0
+    for i in range(brace, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[brace + 1:i]
+    return None
+
+
+_LOCALE_KEY_RE = re.compile(r"^\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*:")
+_LOCALE_KEY_VALUE_RE = re.compile(r"^\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*:\s*'((?:[^'\\]|\\.)*)'")
+
+
+def _block_keys(block: str) -> Set[str]:
+    """Dictionary keys of a literal body; quoted (``'a.b'``) and unquoted forms."""
+    keys: Set[str] = set()
+    for line in block.splitlines():
+        match = _LOCALE_KEY_RE.match(line)
+        if match:
+            keys.add(match.group(1) or match.group(2))
+    return keys
+
+
+def _locale_source_files(pkg: Path) -> List[Path]:
+    """Locale source files of one package (where its zh dict lives)."""
+    return [
+        f for f in sorted(pkg.rglob("*.ts"))
+        if "/lib/" not in str(f)
+        and (re.search(r"locales?[^/]*\.ts$", str(f)) or "/locales/" in str(f))
     ]
-    for line in output.splitlines():
-        file_match = re.search(r"^(packages/extensions/locale-ru/[^()]+\.ts)\(", line)
-        if file_match:
-            # Carry the file forward: a TS1360 detail line (Property ... is
-            # missing) has no path of its own; it belongs to the TS1360
-            # header line above it, which does.
-            file_path = file_match.group(1)
-        for pattern, kind in patterns:
-            match = pattern.search(line)
-            if match:
-                errors.append((kind, match.group(1), file_path))
-    return errors
 
 
-def adapt_ru_dictionaries(errors: List[Tuple[str, str, str]]) -> bool:
-    """Apply locale-key drift to the ru dictionaries; True when all applied.
+def _zh_keys_by_namespace() -> Dict[str, Set[str]]:
+    """Namespace → zh key union, resolved from the owner package's zh dict.
 
-    A missing key is added with a translation from RU_TRANSLATIONS, falling
-    back to the upstream English text of the same key (read from the owning
-    package's locale.ts).  An unknown key is removed.  The target dictionary
-    is the file the TypeScript error names, so no key-to-namespace guessing
-    is involved.  The typecheck rerun is the arbiter of correctness.
+    The owner package of a namespace is found from its ``LocaleNamespaceMap``
+    entry (``'settings.models': ModelsKey``, ``keyof typeof accessEn``),
+    a ``*_NS = '<ns>'`` constant, or a ``ctx.locale.register/bind`` literal.
+    The union is the key set of the zh-equivalent dictionary the entry names:
+    the ``keyof typeof <dict>`` the type alias resolves to, an inlined
+    ``keyof typeof <dict>``, or an inlined literal union alias — never a
+    sibling namespace's dict in the same package.  Owners may live under any
+    package group (client locales, extensions, session-query).  A namespace
+    with no resolvable owner is left out; callers skip such dictionaries
+    instead of guessing a union.
     """
-    locales_dir = REPO_ROOT / RU_LOCALES_DIR
-    files_touched = 0
-    for kind, key, rel_file in errors:
-        dict_path = REPO_ROOT / rel_file if rel_file else None
-        if dict_path is None or not dict_path.exists():
-            # Fall back to searching every ru dictionary for the key.
-            candidates = [p for p in locales_dir.glob("*.ts") if f"'{key}'" in p.read_text(encoding="utf-8")]
-            dict_path = candidates[0] if candidates else None
-        if dict_path is None:
-            log_warn(f"{key}: словарь не найден; пропуск")
+    root = REPO_ROOT / "packages"
+    texts: Dict[Path, str] = {}
+    for f in root.rglob("*.ts"):
+        rel = str(f)
+        if "/lib/" in rel or "/node_modules/" in rel or rel.startswith(str(REPO_ROOT / "packages" / "extensions" / "locale-ru")):
             continue
-        text = dict_path.read_text(encoding="utf-8")
-        if kind == "missing":
-            if f"'{key}'" in text:
-                continue  # already present; the error list was stale
-            translation = RU_TRANSLATIONS.get(key) or upstream_english_text(key)
-            if translation is None:
-                log_warn(f"{key}: нет перевода и нет английского текста; пропуск")
-                continue
-            entry = f"  '{key}': {json.dumps(translation, ensure_ascii=False)},\n"
-            anchor = _dict_insert_anchor(text)
-            text = text[:anchor] + entry + text[anchor:]
-            log_ok(f"добавлен ключ {key}")
-        else:
-            pattern = re.compile(rf"^\s*'{re.escape(key)}':.*\n", re.MULTILINE)
-            if not pattern.search(text):
-                continue  # already removed; the error list was stale
-            text = pattern.sub("", text)
-            log_ok(f"удалён ключ {key}")
-        dict_path.write_text(text, encoding="utf-8")
-        files_touched += 1
-    return files_touched > 0 or not errors
-
-
-def _dict_insert_anchor(text: str) -> int:
-    """Byte offset where a new dictionary entry belongs: after the last
-    ``'key': 'value',`` line, before the closing ``} satisfies``."""
-    satisfies = text.rfind("} satisfies")
-    if satisfies == -1:
-        return -1
-    return text.rfind("\n", 0, satisfies) + 1
-
-
-def upstream_english_text(key: str) -> Optional[str]:
-    """Read the English text for a locale key from the owning package.
-
-    The owner is found by scanning the client packages' locale.ts and
-    locales.ts files for the English dictionary block (the last occurrence
-    of the key, since zh comes first).  Returns None when no owner declares
-    the key.
-    """
-    needle = f"'{key}':"
-    owner_files: List[Path] = []
-    for pattern in ("*/src/client/locale.ts", "*/src/client/locales.ts", "*/src/client/locales/*.ts"):
-        owner_files.extend((REPO_ROOT / "packages/client").glob(pattern))
-    for path in sorted(set(owner_files)):
         try:
-            text = path.read_text(encoding="utf-8")
+            texts[f] = f.read_text(encoding="utf-8")
         except OSError:
             continue
-        matches = list(re.finditer(re.escape(needle), text))
-        if len(matches) >= 2:
-            segment = text[matches[-1].start():matches[-1].start() + 300]
-            value = re.search(r":\s*'((?:[^'\\]|\\.)*)'", segment)
-            if value:
-                return value.group(1)
+
+    # 1. LocaleNamespaceMap entries → ns → (interface file, type expression).
+    ns_expr: Dict[str, Tuple[Path, str]] = {}
+    for f, text in texts.items():
+        cursor = 0
+        while True:
+            m = re.search(r"interface LocaleNamespaceMap\s*\{", text[cursor:])
+            if not m:
+                break
+            start = cursor + m.end()
+            depth, i = 1, start
+            while depth and i < len(text):
+                if text[i] == "{":
+                    depth += 1
+                elif text[i] == "}":
+                    depth -= 1
+                i += 1
+            if depth:
+                break
+            for line in text[start:i - 1].splitlines():
+                entry = re.match(r"^\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*:\s*(.+)$", line)
+                if entry:
+                    ns = entry.group(1) or entry.group(2)
+                    ns_expr[ns] = (f, entry.group(3).split("//")[0].strip())
+            cursor = i
+
+    # 2. Type references: `type X = keyof typeof <dict>` and ``type X = <literal union>``.
+    alias_dict: Dict[str, Tuple[Path, str]] = {}  # alias -> (file, dict var)
+    union_literal: Dict[str, Set[str]] = {}       # alias -> literal union keys
+    for f, text in texts.items():
+        for name, var in re.findall(
+                r"^(?:export )?type ([A-Za-z_$][\w$.]*)\s*=\s*keyof typeof ([A-Za-z_$][\w$.]*)\b",
+                text, re.MULTILINE):
+            alias_dict.setdefault(name, (f, var))
+        for m in re.finditer(
+                r"(?:export )?type ([A-Za-z_$][\w$.]*)\s*=\s*((?:\s*\|\s*'[^']+'){2,})",
+                text):
+            union_literal.setdefault(m.group(1),
+                                     set(re.findall(r"'([^']+)'", m.group(2))))
+
+    def pkg_root_of(path: Path) -> Optional[Path]:
+        for candidate in (path.parent, *path.parents):
+            if candidate == root:
+                return None
+            if (candidate / "package.json").exists():
+                return candidate
+        return None
+
+    def dict_keys_in_file(f: Path, var: str) -> Optional[Set[str]]:
+        block = _dict_block(texts.get(f, ""), var)
+        if block is None and f not in texts:
+            try:
+                block = _dict_block(f.read_text(encoding="utf-8"), var)
+            except OSError:
+                block = None
+        return _block_keys(block) if block is not None else None
+
+    def dict_var_in_pkg(pkg: Path, var: str) -> Optional[Set[str]]:
+        """Keys of `export const <var> = {` in pkg, only when unambiguous."""
+        hits = []
+        for f in _locale_source_files(pkg):
+            block = _dict_block(f.read_text(encoding="utf-8", errors="replace"), var)
+            if block is not None:
+                hits.append(_block_keys(block))
+        return hits[0] if len(hits) == 1 else None
+
+    # 3. Namespace → owner packages via *_NS / NS constants and register/bind.
+    ns_pkgs: Dict[str, Set[Path]] = {}
+    ns_any_ns_const_file_rexn = re.compile(
+        r"(?<![A-Za-z0-9_])(?:[A-Za-z_$][\w$]*_NS|NS)\s*=\s*'([^']+)'")
+    ns_register = re.compile(r"locale\.(?:register|bind)\(\s*'([^']+)'")
+    for f, text in texts.items():
+        pkg = pkg_root_of(f)
+        if pkg is None:
+            continue
+        for ns in ns_any_ns_const_file_rexn.findall(text) + ns_register.findall(text):
+            ns_pkgs.setdefault(ns, set()).add(pkg)
+    for ns, (f, _) in ns_expr.items():
+        pkg = pkg_root_of(f)
+        if pkg is not None:
+            ns_pkgs.setdefault(ns, set()).add(pkg)
+
+    by_ns: Dict[str, Set[str]] = {}
+    for ns, pkgs in ns_pkgs.items():
+        resolved: Optional[Set[str]] = None
+        expr = ns_expr.get(ns)
+        if expr is not None:
+            _, expr_str = expr
+            if expr_str.startswith("keyof typeof "):
+                resolved = dict_var_in_pkg(next(iter(pkgs)), expr_str.split("keyof typeof ", 1)[1].strip())
+            else:
+                alias = expr_str
+                if alias in union_literal:
+                    resolved = union_literal[alias]
+                elif alias in alias_dict:
+                    f, var = alias_dict[alias]
+                    resolved = dict_keys_in_file(f, var)
+        if resolved is None:
+            # No entry, or it could not be pinned: use the owner package's
+            # single zh dictionary, else the plain `zh` of any one candidate.
+            for pkg in pkgs:
+                keys = dict_var_in_pkg(pkg, "zh")
+                if keys is not None:
+                    resolved = keys
+                    break
+        if resolved is not None:
+            by_ns[ns] = resolved
+    return by_ns
+
+
+def _ru_file_namespaces() -> Dict[str, List[str]]:
+    """Ru dictionary file stem → namespaces it fills (from the registry index)."""
+    index = (REPO_ROOT / RU_LOCALES_DIR / "index.ts").read_text(encoding="utf-8")
+    var_to_ns: Dict[str, str] = {}
+    for ns, var in re.findall(r"'([^']+)':\s*(\w+),", index):
+        var_to_ns[var] = ns
+    file_to_ns: Dict[str, List[str]] = {}
+    for var, stem in re.findall(r"ru as (\w+)\s*}\s*from\s*'\./([^']+)\.ts'", index):
+        ns = var_to_ns.get(var)
+        if ns:
+            file_to_ns.setdefault(stem, []).append(ns)
+    return file_to_ns
+
+
+def locale_drift() -> List[Tuple[str, List[str], List[str]]]:
+    """Per ru dictionary: (rel path, missing keys, extra keys) vs owner unions.
+
+    The diff is deterministic: it compares each ru dictionary's keys against
+    the zh key union of the namespaces it fills, so every drifted key is seen
+    in one pass — no dependence on TypeScript's capped diagnostics.
+    """
+    zh_by_ns = _zh_keys_by_namespace()
+    drift: List[Tuple[str, List[str], List[str]]] = []
+    for stem, namespaces in sorted(_ru_file_namespaces().items()):
+        dict_path = REPO_ROOT / RU_LOCALES_DIR / f"{stem}.ts"
+        if not dict_path.exists():
+            continue
+        if any(ns not in zh_by_ns for ns in namespaces):
+            # An unresolvable owner union must not guess: leave the
+            # dictionary to the typecheck, which is the arbiter anyway.
+            continue
+        block = _dict_block(dict_path.read_text(encoding="utf-8"), "ru")
+        if block is None:
+            continue
+        ru_keys = _block_keys(block)
+        union: Set[str] = set()
+        for ns in namespaces:
+            union |= zh_by_ns.get(ns, set())
+        missing = sorted(union - ru_keys)
+        extra = sorted(ru_keys - union)
+        if missing or extra:
+            drift.append((str(dict_path.relative_to(REPO_ROOT)), missing, extra))
+    return drift
+
+
+def _en_text_for(namespaces: List[str], key: str) -> Optional[str]:
+    """English text of a key from its owner's en dictionary.
+
+    Owner packages are tried first (their en block is the authoritative
+    text), then every client locale file as a fallback for keys upstream
+    declared without a zh/en translation yet.
+    """
+    def scan(files: List[Path]) -> Optional[str]:
+        for f in files:
+            block = _dict_block(f.read_text(encoding="utf-8", errors="replace"), "en")
+            if block is None:
+                continue
+            for line in block.splitlines():
+                m = _LOCALE_KEY_VALUE_RE.match(line)
+                if m and (m.group(1) or m.group(2)) == key:
+                    return m.group(3)
+        return None
+    roots = [r for r in (REPO_ROOT / "packages" / "client",
+                         REPO_ROOT / "packages" / "extensions") if r.exists()]
+    if namespaces:
+        ns_pattern = re.compile(
+            r"(?<![A-Za-z0-9_])(?:NS|COMMON_NS|LOCALE_NS)\s*=\s*'(?:"
+            + "|".join(re.escape(ns) for ns in namespaces) + ")'")
+        for root in roots:
+            for pkg in root.glob("*"):
+                if not pkg.is_dir():
+                    continue
+                for f in pkg.rglob("*.ts"):
+                    try:
+                        if ns_pattern.search(f.read_text(encoding="utf-8")):
+                            break
+                    except OSError:
+                        continue
+                else:
+                    continue
+                value = scan(_locale_source_files(pkg))
+                if value is not None:
+                    return value
+    for root in roots:
+        for pkg in root.glob("*"):
+            if pkg.is_dir():
+                value = scan(_locale_source_files(pkg))
+                if value is not None:
+                    return value
     return None
+
+
+def _key_quote_style(text: str) -> bool:
+    """True when the dictionary quotes its keys (``'a.b':``); unquoted otherwise."""
+    quoted = len(re.findall(r"^\s*'([^']+)':", text, re.MULTILINE))
+    unquoted = len(re.findall(r"^\s*[A-Za-z_$][\w$.]*\s*:", text, re.MULTILINE))
+    return quoted >= unquoted
+
+
+def _ts_escape(value: str) -> str:
+    """Escape a single-quoted TS string literal body.
+
+    Existing escape sequences (\n, \t, \', \\) pass through unchanged so a
+    value read from an en dictionary is emitted exactly as written.
+    """
+    out: List[str] = []
+    i = 0
+    while i < len(value):
+        ch = value[i]
+        if ch == "\\" and i + 1 < len(value) and value[i + 1] in "nrtb\\'\"0":
+            out.append(ch + value[i + 1])
+            i += 2
+            continue
+        if ch == "'":
+            out.append("\\'")
+        elif ch == "\\":
+            out.append("\\\\")
+        else:
+            out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _insert_key(text: str, key: str, value: str, quoted: bool) -> Optional[str]:
+    """Insert one dictionary entry before the closing ``} satisfies``.
+
+    The key is quoted unless the surrounding dictionary uses the unquoted
+    style and the key is a valid identifier; a dotted key must always be
+    quoted (``'add.me': …`` is the only legal spelling).
+    """
+    anchor = text.rfind("} satisfies")
+    if anchor == -1:
+        return None
+    pos = text.rfind("\n", 0, anchor) + 1
+    literal = f"'{key}'" if quoted or not re.fullmatch(r"[A-Za-z_$][\w$]*", key) else key
+    return text[:pos] + f"  {literal}: '{_ts_escape(value)}',\n" + text[pos:]
+
+
+def _drop_key_line(text: str, key: str) -> Optional[str]:
+    """Remove a key line plus its indented value-continuation lines."""
+    match = re.search(rf"^\s*(?:'{re.escape(key)}'|{re.escape(key)})\s*:",
+                      text, re.MULTILINE)
+    if not match:
+        return None
+    cursor = match.end()
+    line_end = text.find("\n", cursor)
+    cursor = cursor if line_end == -1 else line_end + 1
+    while cursor < len(text):
+        nl = text.find("\n", cursor)
+        line = text[cursor:nl if nl != -1 else len(text)]
+        stripped = line.strip()
+        if not stripped:
+            cursor = nl + 1 if nl != -1 else len(text)
+            continue
+        if stripped.startswith("}") or _LOCALE_KEY_RE.match(line) or not line[0].isspace():
+            break
+        cursor = nl + 1 if nl != -1 else len(text)
+    return text[:match.start()] + text[cursor:]
+
+
+def realign_ru_dictionaries() -> Tuple[List[str], List[str]]:
+    """Apply the full locale drift; returns (changed rel paths, problems).
+
+    Missing keys are added with a translation from RU_TRANSLATIONS, falling
+    back to the owner's English text; extra keys are dropped.  The whole
+    drift is applied in one pass (no iteration against re-parsed compiler
+    output), and the rerun typecheck is the arbiter of correctness.
+    """
+    drift = locale_drift()
+    changed: List[str] = []
+    problems: List[str] = []
+    ns_by_file = _ru_file_namespaces()
+    for rel, missing, extra in drift:
+        dict_path = REPO_ROOT / rel
+        text = dict_path.read_text(encoding="utf-8")
+        original = text
+        quoted = _key_quote_style(text)
+        namespaces = ns_by_file.get(dict_path.stem, [])
+        for key in extra:
+            new_text = _drop_key_line(text, key)
+            if new_text is None:
+                problems.append(f"{rel}: ключ {key} не найден для удаления")
+            else:
+                text = new_text
+                log_ok(f"удалён ключ {key} ({rel})")
+        for key in missing:
+            translation = RU_TRANSLATIONS.get(key) or _en_text_for(namespaces, key)
+            if translation is None:
+                problems.append(f"{rel}: нет перевода для ключа {key}")
+                continue
+            new_text = _insert_key(text, key, translation, quoted)
+            if new_text is None:
+                problems.append(f"{rel}: нет точки вставки для ключа {key}")
+            else:
+                text = new_text
+                log_ok(f"добавлен ключ {key} ({rel})")
+        if text != original:
+            dict_path.write_text(text, encoding="utf-8")
+            changed.append(rel)
+    return changed, problems
 
 
 def push_to_main() -> Optional[str]:
@@ -867,11 +1162,29 @@ def main(argv: List[str]) -> int:
         print(__doc__)
         return 0
 
-    # Never run two syncs at once (the daily cron plus a manual run).
+    # Never run two syncs at once (the daily cron plus a manual run).  A
+    # lock left by a killed run is stale: when the owner PID is gone, the
+    # lock is removed and the sync continues.
     lock = REPO_ROOT / ".sync-lock"
     if lock.exists():
-        log("Другая синхронизация уже выполняется (.sync-lock существует); выход.")
-        return 0
+        alive = False
+        try:
+            pid = int(lock.read_text(encoding="utf-8").strip() or "0")
+        except (OSError, ValueError):
+            pid = 0
+        if pid > 0:
+            try:
+                os.kill(pid, 0)
+                alive = True
+            except ProcessLookupError:
+                alive = False
+            except OSError:
+                alive = True  # permission denied: assume it is still running
+        if alive:
+            log("Другая синхронизация уже выполняется (.sync-lock существует); выход.")
+            return 0
+        log_warn("Устаревший .sync-lock (владелец-процесс не запущен); удаляю и продолжаю")
+        lock.unlink(missing_ok=True)
     lock.write_text(str(os.getpid()), encoding="utf-8")
 
     try:
