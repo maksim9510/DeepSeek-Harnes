@@ -42,7 +42,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -54,7 +54,9 @@ NODE_MIN = (22, 19, 0)
 #: project toolchain needs.  Node.js 22 bundles npm 10, so the official
 #: NodeSource distribution is required whenever the distro npm is older.
 ASTRA_NPM_MIN = (10, 0, 0)
-#: pnpm version pinned by the repository (package.json "packageManager").
+#: pnpm version fallback for the bootstrap stage, used only when no checkout
+#: exists yet (doctor before install).  Once a checkout is present the
+#: repository's own package.json "packageManager" pin wins (``_repo_pnpm_pin``).
 PNPM_VERSION = "11.7.0"
 #: Default source repository (the Russian-localization fork).
 DEFAULT_REPO = "https://github.com/maksim9510/DeepSeek-Harnes.git"
@@ -166,6 +168,26 @@ def version_at_least(version: Optional[Tuple[int, int, int]], minimum: Tuple[int
     if version is None:
         return False
     return version >= minimum
+
+
+_REPO_PIN_RE = re.compile(r'"packageManager":\s*"pnpm@(\d+\.\d+(?:\.\d+)?)')
+
+
+def _repo_pnpm_pin(source_dir: Path) -> Optional[str]:
+    """The pnpm version the checkout pins via package.json ``packageManager``.
+
+    Returns None when no checkout exists or the field is absent, so callers
+    fall back to the ``PNPM_VERSION`` constant for the bootstrap stage.
+    """
+    package = source_dir / "package.json"
+    if not path_exists(package):
+        return None
+    try:
+        text = package.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    match = _REPO_PIN_RE.search(text)
+    return match.group(1) if match else None
 
 
 def _yaml_top_keys(path: Path) -> set:
@@ -369,6 +391,9 @@ class Doctor:
         self.platform = platform_info
         self.source_dir = source_dir
         self.fix = fix
+        #: The pnpm version to target: the checkout's own pin when one exists,
+        #: else the bootstrap fallback constant.
+        self.pnpm_pin = _repo_pnpm_pin(source_dir) or PNPM_VERSION
         #: None lets every automatic fix run; a set restricts auto-repair to
         #: the named checks (install bootstraps only the pnpm toolchain).
         self.fix_names = fix_names
@@ -404,7 +429,7 @@ class Doctor:
         """
         if not has_command("corepack"):
             return None
-        code, out = run_capture(["corepack", f"pnpm@{PNPM_VERSION}", "--version"])
+        code, out = run_capture(["corepack", f"pnpm@{self.pnpm_pin}", "--version"])
         if code == 0:
             return out.strip()
         # Fall back to an unqualified resolve, which honors the current
@@ -470,7 +495,7 @@ class Doctor:
     def check_pnpm(self) -> CheckResult:
         """The effective pnpm is the one Corepack resolves.
 
-        The repository pins ``packageManager: pnpm@11.7.0``, so a bare global
+        The repository pins ``packageManager: pnpm@<pin>``, so a bare global
         ``pnpm`` shim can be older than the pinned version while Corepack
         still resolves the right one.  The check therefore prefers
         ``corepack pnpm --version`` and falls back to the global shim.
@@ -489,15 +514,18 @@ class Doctor:
                 detail="pnpm not resolvable (global shim or corepack)",
                 fix=(
                     f"Enable Corepack and prepare pnpm: "
-                    f"`corepack enable && corepack prepare pnpm@{PNPM_VERSION} --activate`."
+                    f"`corepack enable && corepack prepare pnpm@{self.pnpm_pin} --activate`."
                 ),
                 probe=self.check_pnpm,
             )
-        pinned = tuple(int(p) for p in PNPM_VERSION.split("."))
+        pinned = tuple(int(part) for part in self.pnpm_pin.split("."))
         # Exactly the pin: a newer pnpm refuses to switch under Corepack and
         # fails the build's nested pnpm calls, an older one rewrites the
         # lockfile without the workspace overrides.
         ok = version == pinned
+        note = ""
+        if self.pnpm_pin != PNPM_VERSION:
+            note = f" (repo pin; the installer constant is still {PNPM_VERSION})"
         sudo_hint = (
             " If `corepack enable` fails with EACCES on a root-owned bin "
             "directory, run `sudo corepack enable` once, then re-run doctor."
@@ -505,10 +533,10 @@ class Doctor:
         return CheckResult(
             "pnpm",
             ok,
-            detail=f"pnpm {format_version_tuple(version)} via {source} (repo pins {PNPM_VERSION})",
+            detail=f"pnpm {format_version_tuple(version)} via {source} (target pin {self.pnpm_pin}){note}",
             fix=(
                 f"Install and activate the pinned pnpm: "
-                f"`corepack enable && corepack prepare pnpm@{PNPM_VERSION} --activate`.{sudo_hint}"
+                f"`corepack enable && corepack prepare pnpm@{self.pnpm_pin} --activate`.{sudo_hint}"
             ),
             probe=self.check_pnpm,
         )
@@ -549,7 +577,7 @@ class Doctor:
         if "corepack" in os.path.realpath(path):
             return CheckResult("pnpm-shim", True, detail=f"bare pnpm is a Corepack shim ({path})")
         version = self._pnpm_version()
-        pinned = tuple(int(p) for p in PNPM_VERSION.split("."))
+        pinned = tuple(int(part) for part in self.pnpm_pin.split("."))
         if version == pinned:
             return CheckResult("pnpm-shim", True, detail=f"standalone pnpm {format_version_tuple(version)} matches the pin exactly")
         version_text = format_version_tuple(version) if version else "unknown"
@@ -557,7 +585,7 @@ class Doctor:
             "pnpm-shim",
             False,
             detail=(
-                f"standalone pnpm {version_text} at {path} differs from the pinned {PNPM_VERSION}: "
+                f"standalone pnpm {version_text} at {path} differs from the pinned {self.pnpm_pin}: "
                 "older-than-10 rewrites pnpm-lock.yaml without the workspace overrides; newer refuses to "
                 "switch under Corepack and fails the nested pnpm calls in the build"
             ),
@@ -923,18 +951,7 @@ class Doctor:
         the pinned version and makes it the Corepack default.  Only the
         prepare step is therefore required for a successful repair.
         """
-        env = {"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"}
-        if has_command("corepack"):
-            code, out = run_capture(["corepack", "enable"], env=env)
-            if code != 0:
-                log_warn(f"corepack enable skipped ({out.strip()[:120]}…); continuing with prepare --activate")
-        code, out = run_capture(
-            ["corepack", "prepare", f"pnpm@{PNPM_VERSION}", "--activate"], env=env
-        )
-        if code != 0:
-            log_fail(f"corepack prepare failed: {out.strip()}")
-            return False
-        return True
+        return _prepare_pnpm(self.pnpm_pin)
 
     def _fix_lockfile(self) -> bool:
         """Regenerate the lockfile so it matches pnpm-workspace.yaml."""
@@ -961,6 +978,28 @@ class Doctor:
 # ---------------------------------------------------------------------------
 # Installer
 # ---------------------------------------------------------------------------
+
+def _prepare_pnpm(pin: str) -> bool:
+    """Download and activate pnpm@<pin> through Corepack.
+
+    ``corepack enable`` creates global shims and can fail with EACCES on a
+    root-owned bin directory; that is not fatal — the pinned pnpm is still
+    activated by ``corepack prepare --activate``.  Returns True when the
+    pinned version is resolvable afterwards.
+    """
+    env = {"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"}
+    if has_command("corepack"):
+        code, out = run_capture(["corepack", "enable"], env=env)
+        if code != 0:
+            log_warn(f"corepack enable skipped ({out.strip()[:120]}…); continuing with prepare --activate")
+    code, out = run_capture(
+        ["corepack", "prepare", f"pnpm@{pin}", "--activate"], env=env
+    )
+    if code != 0:
+        log_fail(f"corepack prepare pnpm@{pin} failed: {out.strip()}")
+        return False
+    return True
+
 
 def _ensure_git_repo(repo: str, source_dir: Path) -> bool:
     """Clone (or update) the repository into source_dir."""
@@ -1127,6 +1166,10 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
 
     if not _ensure_git_repo(repo, source_dir):
         return False
+    repo_pin = _repo_pnpm_pin(source_dir)
+    if repo_pin and repo_pin != PNPM_VERSION:
+        log_step(f"Чек-аут закрепляет pnpm@{repo_pin}; активирую закреплённую версию")
+        _prepare_pnpm(repo_pin)
     if not _install_dependencies(source_dir, platform_info):
         return False
     if not skip_build and not _build(source_dir):
