@@ -12,7 +12,6 @@ export const ru = {
   'openDocument.error': 'Не удалось открыть файл конфигурации',
   'general.nav': 'Общие',
   'connection.error': 'Нет подключения',
-  'connection.retry': 'Переподключиться сейчас',
   'connection.connecting': 'Подключение',
   'connection.connected': 'Подключено',
   'connection.reconnect': 'Нет подключения, переподключиться сейчас',

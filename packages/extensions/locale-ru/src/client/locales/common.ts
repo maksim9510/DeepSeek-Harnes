@@ -37,8 +37,6 @@ export const ru = {
   'unknown': 'Неизвестно',
   'none': 'Нет',
   'truncated': 'Усечено',
-  'json.collapseNode': 'Свернуть узел JSON',
-  'json.expandNode': 'Развернуть узел JSON',
   'json.label': 'JSON',
   'markdown.footnotes': 'Сноски',
   'markdown.truncatedCharacters': '… усечено, всего {total} символов',

@@ -105,4 +105,7 @@ export const ru = {
   keyRequired: 'Введите API-ключ, чтобы продолжить.',
   fetchSearch: 'Поиск',
   fetchNoMatches: 'Ничего не найдено',
+  deepSeekChatBaseUrl: 'https://api.deepseek.com',
+  deepSeekMessagesBaseUrl: 'https://api.deepseek.com/anthropic',
+  deepSeekEndpointHint: 'Используйте адрес, совместимый с настроенным подключением.',
 } satisfies Record<LocaleNamespaceMap['settings.models'], string>
