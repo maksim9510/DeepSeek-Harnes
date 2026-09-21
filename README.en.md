@@ -14,6 +14,18 @@ Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://de
 
 This fork adds a Russian web UI — see the [Russian README](README.md) for details. The localization ships as the language-pack plugin [`@deepseek-ai/dsh-client-locale-ru`](packages/extensions/locale-ru/README.md); the `dsh-client-locale` core is untouched.
 
+## Web search
+
+This fork adds the local search shim [`tools/dsh-search-shim`](tools/dsh-search-shim/README.md): it accepts `web-search-deepseek` provider requests in the Anthropic Messages format and performs the search itself. The route follows the provider currently configured in `~/.dsh/settings.yaml` — a gateway with server-side search is asked first and every other provider uses the DuckDuckGo/Bing fallback, so switching providers never leaves search broken.
+
+The installer deploys the shim:
+
+```sh
+python3 DeepSeek-install.py install
+```
+
+It copies the modules into `~/.dsh/search-shim`, installs a systemd user unit, and checks the endpoint; `doctor` reports the shim state and `doctor --fix` restores it. Details in the [shim README](tools/dsh-search-shim/README.md).
+
 ## Developer preview
 
 DeepSeek Harness is in _developer preview_ and iterating rapidly. **THERE WILL BE COMPATIBILITY-BREAKING CHANGES.**

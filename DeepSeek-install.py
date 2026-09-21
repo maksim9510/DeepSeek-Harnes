@@ -37,12 +37,13 @@ import re
 import shutil
 import subprocess
 import sys
+import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -64,6 +65,18 @@ DEFAULT_REPO = "https://github.com/maksim9510/DeepSeek-Harnes.git"
 SOURCE_DIR_NAME = ".dsh/source"
 #: Build record written by a complete `pnpm run build` (see scripts/build.ts).
 CLIENT_BUILD_RECORD = ".dsh-build/client-build-environment.json"
+
+#: Fork-local web search shim: its source inside the checkout, the modules
+#: deployed to the Harness home, the systemd user unit that keeps it running,
+#: and the port `web-search-deepseek.baseURL` must target.
+SHIM_SOURCE_DIR = "tools/dsh-search-shim"
+SHIM_DIR = ".dsh/search-shim"
+SHIM_MODULES = ("server.mjs", "provider-route.mjs")
+SHIM_UNIT_NAME = "dsh-search-shim.service"
+SHIM_PORT = 24881
+#: The shim uses global `fetch`, so it needs Node.js 18 even though the
+#: repository itself has a higher floor.
+SHIM_NODE_MIN = (18, 0, 0)
 
 #: Astra Linux is Debian-based but ships an old npm; the official Node.js
 #: distribution must be used there instead of the distro package.
@@ -768,6 +781,73 @@ class Doctor:
             ),
         )
 
+    def check_search_shim(self) -> CheckResult:
+        """Report whether the fork's web search shim is deployed and running.
+
+        The shim answers the `web-search-deepseek` provider, so a checkout
+        that carries it but never deployed it leaves the Web UI without web
+        search.  A checkout without the shim at all is not a defect.
+        """
+        source = self.source_dir / SHIM_SOURCE_DIR
+        if not source.is_dir():
+            return CheckResult("search-shim", True, detail="no shim in this checkout — check skipped")
+        target_dir = _shim_target_dir()
+        absent = [name for name in SHIM_MODULES if not path_exists(target_dir / name)]
+        if absent:
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=f"the shim is not deployed ({', '.join(absent)} missing from {target_dir})",
+                fix="python3 DeepSeek-install.py doctor --fix",
+                probe=self.check_search_shim,
+            )
+        node = _shim_node()
+        if node is None:
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=f"Node.js >= {format_version_tuple(SHIM_NODE_MIN)} is needed to run the shim",
+                fix="install a supported Node.js, then re-run doctor",
+            )
+        if not _systemd_user_available():
+            problem = _shim_health()
+            if problem is None:
+                return CheckResult("search-shim", True, detail=f"running on port {SHIM_PORT} without a systemd user manager")
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=problem,
+                fix=f"run: DSH_SEARCH_SHIM_PORT={SHIM_PORT} {node} {target_dir / 'server.mjs'}",
+            )
+        unit = _shim_unit_path()
+        if not path_exists(unit):
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=f"the unit is not registered ({unit} missing)",
+                fix="python3 DeepSeek-install.py doctor --fix",
+                probe=self.check_search_shim,
+            )
+        code, out = run_capture(["systemctl", "--user", "is-active", SHIM_UNIT_NAME])
+        state = out.strip()
+        if code != 0 or state != "active":
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=f"unit {SHIM_UNIT_NAME} is {state or 'not running'}",
+                fix=f"python3 DeepSeek-install.py doctor --fix",
+                probe=self.check_search_shim,
+            )
+        problem = _shim_health()
+        if problem is not None:
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=problem,
+                fix=f"journalctl --user -u {SHIM_UNIT_NAME} -n 40",
+            )
+        return CheckResult("search-shim", True, detail=f"running on port {SHIM_PORT} with the active unit")
+
     def check_lockfile(self) -> CheckResult:
         """Detect a pnpm frozen-lockfile mismatch in the checkout.
 
@@ -823,6 +903,7 @@ class Doctor:
             self.check_node_modules(),
             self.check_build_record(),
             self.check_lockfile(),
+            self.check_search_shim(),
             self.check_env_key(),
             self.check_network(),
         ]
@@ -877,6 +958,8 @@ class Doctor:
             return True    # repointing the shim at corepack is automatic; EACCES is reported with the sudo command
         if result.name == "lockfile":
             return True    # lockfile regeneration inside the checkout
+        if result.name == "search-shim":
+            return True    # redeploying the shim from the checkout is automatic
         if result.name == "packages":
             return not result.auto_fixed  # distro package install
         return False
@@ -891,6 +974,9 @@ class Doctor:
                 return self._fix_pnpm_shim()
             if result.name == "lockfile":
                 return self._fix_lockfile()
+            if result.name == "search-shim":
+                _deploy_shim(self.source_dir)
+                return True
             if result.name == "packages":
                 return self._fix_packages()
         except (OSError, subprocess.SubprocessError) as exc:
@@ -1117,6 +1203,136 @@ def _create_env_file(source_dir: Path) -> None:
     env_file.write_text("# DeepSeek Harness environment\n# Add your API key below to use the assistant.\nDEEPSEEK_API_KEY=\n", encoding="utf-8")
 
 
+def _shim_target_dir() -> Path:
+    """Deployment directory for the shim inside the Harness home."""
+    return Path.home() / SHIM_DIR
+
+
+def _shim_unit_path() -> Path:
+    """Path of the shim's systemd user unit file."""
+    return Path.home() / ".config" / "systemd" / "user" / SHIM_UNIT_NAME
+
+
+def _systemd_user_available() -> bool:
+    """Whether a systemd user manager is reachable on this host."""
+    if not has_command("systemctl"):
+        return False
+    return Path("/run/systemd/system").is_dir()
+
+
+def _shim_node() -> Optional[str]:
+    """Absolute `node` path for the unit's ExecStart, or None when unusable.
+
+    The unit runs without the interactive shell's PATH, so a bare `node`
+    would resolve only by accident; the absolute path is what makes the unit
+    start on a machine whose Node.js came from nvm or a manual install.
+    """
+    node = shutil.which("node")
+    if node is None:
+        return None
+    code, out = run_capture([node, "--version"])
+    if code != 0:
+        return None
+    version = parse_version(out)
+    return node if version_at_least(version, SHIM_NODE_MIN) else None
+
+
+def _shim_health(port: int = SHIM_PORT) -> Optional[str]:
+    """Return None when the shim's health endpoint answers, else the problem."""
+    try:
+        with urllib.request.urlopen(f"http://127.0.0.1:{port}/health", timeout=10) as response:
+            if response.status == 200:
+                return None
+            return f"health endpoint answered HTTP {response.status}"
+    except (urllib.error.URLError, OSError) as exc:
+        return f"health endpoint unreachable: {exc}"
+
+
+def _wait_for_shim_health(port: int = SHIM_PORT, timeout: float = 15.0) -> Optional[str]:
+    """Poll the health endpoint until it answers or `timeout` elapses.
+
+    A restart answers only once Node has bound the port, which takes a moment;
+    probing once immediately after `systemctl restart` reports a healthy unit
+    as unreachable.
+    """
+    import time
+
+    deadline = time.monotonic() + timeout
+    problem = _shim_health(port)
+    while problem is not None and time.monotonic() < deadline:
+        time.sleep(0.5)
+        problem = _shim_health(port)
+    return problem
+
+
+def _render_shim_unit(node: str, target_dir: Path, port: int) -> str:
+    """Render the shim's systemd user unit for one deployment."""
+    return (
+        "[Unit]\n"
+        "Description=DSH web search shim (local Anthropic-compatible "
+        "web_search_20250305 endpoint)\n"
+        "After=network-online.target\n"
+        "Wants=network-online.target\n"
+        "\n"
+        "[Service]\n"
+        "Type=simple\n"
+        f"ExecStart={node} {target_dir / 'server.mjs'}\n"
+        f"Environment=DSH_SEARCH_SHIM_PORT={port}\n"
+        "Restart=on-failure\n"
+        "RestartSec=2\n"
+        "\n"
+        "[Install]\n"
+        "WantedBy=default.target\n"
+    )
+
+
+def _deploy_shim(source_dir: Path) -> None:
+    """Deploy the shim and register its unit; report problems without failing.
+
+    A checkout without the shim is valid (the sync protects the shim, but a
+    pre-shim clone or an upstream rewind may lack it), and the Web UI works
+    without it, so this step never aborts an installation.
+    """
+    source = source_dir / SHIM_SOURCE_DIR
+    if not source.is_dir():
+        log_warn(f"No search shim in the checkout ({source}); skipping.")
+        return
+    missing = [name for name in SHIM_MODULES if not (source / name).is_file()]
+    if missing:
+        log_warn(f"Search shim source is incomplete, missing: {', '.join(missing)}")
+        return
+
+    target_dir = _shim_target_dir()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    for name in SHIM_MODULES:
+        shutil.copyfile(source / name, target_dir / name)
+    log_ok(f"Search shim deployed to {target_dir}")
+
+    if not _systemd_user_available():
+        log_warn("No systemd user manager; the shim is deployed but not started.")
+        log(f"    run it with: DSH_SEARCH_SHIM_PORT={SHIM_PORT} {shutil.which('node') or 'node'} {target_dir / 'server.mjs'}")
+        return
+
+    node = _shim_node()
+    if node is None:
+        log_warn(f"Node.js >= {format_version_tuple(SHIM_NODE_MIN)} is needed to run the shim; unit not written.")
+        return
+
+    unit = _shim_unit_path()
+    unit.parent.mkdir(parents=True, exist_ok=True)
+    unit.write_text(_render_shim_unit(node, target_dir, SHIM_PORT), encoding="utf-8")
+    run(["systemctl", "--user", "daemon-reload"])
+    run(["systemctl", "--user", "enable", "--now", SHIM_UNIT_NAME])
+    run(["systemctl", "--user", "restart", SHIM_UNIT_NAME])
+
+    problem = _wait_for_shim_health()
+    if problem is None:
+        log_ok(f"Search shim running on port {SHIM_PORT}")
+    else:
+        log_warn(f"Search shim unit did not become healthy: {problem}")
+        log(f"    inspect: journalctl --user -u {SHIM_UNIT_NAME} -n 40")
+
+
 def _write_windows_launcher(source_dir: Path) -> Optional[Path]:
     """Create a dsh.cmd launcher for Windows (no-op elsewhere)."""
     if os.name != "nt":
@@ -1143,7 +1359,7 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
     # enable — so a fresh machine ends the install with a working pnpm.
     doctor = Doctor(
         platform_info, source_dir, fix=True,
-        fix_names=frozenset({"corepack", "pnpm", "pnpm-shim"}),
+        fix_names=frozenset({"corepack", "pnpm", "pnpm-shim", "search-shim"}),
     )
     doctor.run_all()
     blocking = [
@@ -1175,6 +1391,7 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
     if not skip_build and not _build(source_dir):
         return False
     _create_env_file(source_dir)
+    _deploy_shim(source_dir)
     launcher = _write_windows_launcher(source_dir)
     log_step("Installation complete")
     if launcher:
@@ -1197,6 +1414,10 @@ def _print_help() -> None:
 
 USAGE
     python3 DeepSeek-install.py <command> [options]
+
+The install also deploys the fork's web search shim (tools/dsh-search-shim)
+into ~/.dsh/search-shim and registers its systemd user unit, so the Web UI
+has working web search without a separate setup step.
 
 COMMANDS
     install            Clone, install dependencies, build and prepare the

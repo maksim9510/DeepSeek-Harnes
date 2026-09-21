@@ -23,6 +23,18 @@ DeepSeek Harness（`dsh`）是由 [DeepSeek AI](https://deepseek.com) 开发的�
 
 详见[该包的 README](packages/extensions/locale-ru/README.zh.md)。
 
+## 网络搜索
+
+本 fork 添加了本地搜索垫片 [`tools/dsh-search-shim`](tools/dsh-search-shim/README.zh.md)：它以 Anthropic Messages 格式接收 `web-search-deepseek` 提供方的请求，并自行执行搜索。路由按 `~/.dsh/settings.yaml` 中的当前提供方选择——具备服务端搜索的网关优先询问，其余情况使用 DuckDuckGo/Bing 兜底层，因此切换提供方时搜索不会整体失效。
+
+垫片由安装器部署：
+
+```sh
+python3 DeepSeek-install.py install
+```
+
+它把模块复制到 `~/.dsh/search-shim`，安装 systemd 用户单元并检查端点可用性；`doctor` 显示垫片状态，`doctor --fix` 可将其恢复。详见[垫片的 README](tools/dsh-search-shim/README.zh.md)。
+
 ## 开发者预览
 
 DeepSeek Harness 处于 _开发者预览_ 阶段，正在快速迭代。**未来将出现破坏兼容性的变更。**

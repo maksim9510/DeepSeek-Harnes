@@ -14,6 +14,8 @@ Protected local work
 * Russian web localization (packages/extensions/locale-ru, roster row in
   packages/bundle/web-app/cordis.patch.yml, tsconfig paths, package deps)
 * The universal installer (DeepSeek-install.py and its docs)
+* The local web search shim (tools/dsh-search-shim), which upstream has no
+  counterpart for
 * The lockfile fix that keeps pnpm install working
 
 How the sync works
@@ -95,6 +97,12 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("packages/bundle/web-app/package.json", "@deepseek-ai/dsh-client-locale-ru"),
     ("pnpm-workspace.yaml", "overrides:"),
     ("package.json", "pnpm@"),
+    # The shim is fork-only: upstream never has these paths, so a merge that
+    # removed them means the fork lost its deployment source, not that a
+    # conflict was resolved.  The installer deploys from here.
+    ("tools/dsh-search-shim/server.mjs", "web_search_20250305"),
+    ("tools/dsh-search-shim/provider-route.mjs", "resolveActiveRoute"),
+    ("DeepSeek-install.py", "SHIM_SOURCE_DIR"),
 ]
 
 #: Locale dictionaries the ru language pack owns, relative to the ru package's
@@ -617,6 +625,7 @@ def merge_upstream() -> Tuple[bool, Optional[str]]:
         f"  git merge origin/{UPSTREAM_BRANCH}",
         "  # разрешите конфликты в перечисленных файлах, сохранив наши правки:",
         "  #   README.md (русский), packages/extensions/locale-ru, DeepSeek-install.py,",
+        "  #   tools/dsh-search-shim (локальный поисковый шим),",
         "  git add <файлы> && git commit",
         "  python3 DeepSeek-sync.py   # продолжит: проверки и пуш в main",
     ]

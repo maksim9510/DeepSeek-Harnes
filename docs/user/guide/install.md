@@ -8,6 +8,8 @@ English | [中文](install.zh.md)
 
 The `install` command checks the environment, bootstraps the pnpm toolchain — installs Corepack through npm when it is missing, downloads and activates the pinned `pnpm@11.7.0` through `corepack prepare`, and creates or repoints the bare `pnpm` shim — then installs missing system dependencies, clones the repository into `~/.dsh/source`, runs `pnpm install` and `pnpm run build`, creates an empty `.env` file for your API key, and prints the command that starts the Web UI.
 
+It also deploys the fork's [web search shim](../../../tools/dsh-search-shim/README.md): the two modules are copied from the checkout into `~/.dsh/search-shim`, a systemd user unit that starts them is written and enabled, and the installer waits for the health endpoint before reporting success. Web search works after this step without further setup; a machine without a systemd user manager gets the files and the command to run the shim directly.
+
 ```sh
 python3 DeepSeek-install.py install
 ```
@@ -49,6 +51,7 @@ Astra Linux is Debian-based but ships an npm older than the project toolchain ne
 - A pnpm version different from the pin: `corepack prepare pnpm@11.7.0 --activate` downloads and activates the pinned pnpm.
 - A bare `pnpm` shim missing or whose version differs from the pinned one (a standalone pnpm older than 10 rewrites the lockfile; a newer one refuses to switch under Corepack and fails the build's nested pnpm calls): the shim is created or repointed at Corepack; when its directory is root-owned, the exact `sudo corepack enable pnpm` command is reported.
 - A lockfile out of sync with `pnpm-workspace.yaml`: the lockfile is regenerated with `pnpm install --no-frozen-lockfile --lockfile-only`.
+- A missing or stopped web search shim: the deployed modules and its unit are restored from the checkout.
 - Missing distro packages: they are installed through the system package manager.
 
 ## Synchronize with upstream

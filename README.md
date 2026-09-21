@@ -23,6 +23,18 @@ DeepSeek Harness (`dsh`) — открытый agent harness (агентный ф
 
 Подробности — в [README пакета](packages/extensions/locale-ru/README.md).
 
+## Поиск в интернете
+
+Этот форк добавляет локальный поисковый шим [`tools/dsh-search-shim`](tools/dsh-search-shim/README.md): он принимает запросы провайдера `web-search-deepseek` в формате Anthropic Messages и сам выполняет поиск. Маршрут выбирается по текущему провайдеру из `~/.dsh/settings.yaml` — шлюз с серверным поиском опрашивается первым, для остальных используется резервный контур DuckDuckGo/Bing, поэтому поиск не отваливается целиком при смене провайдера.
+
+Шим разворачивает установщик:
+
+```sh
+python3 DeepSeek-install.py install
+```
+
+Он копирует модули в `~/.dsh/search-shim`, ставит systemd-юнит пользователя и проверяет доступность эндпоинта; `doctor` показывает состояние шима, а `doctor --fix` восстанавливает его. Подробности — в [README шима](tools/dsh-search-shim/README.md).
+
 ## Developer preview
 
 DeepSeek Harness находится в стадии _developer preview_ и быстро развивается. **Будут изменения, ломающие совместимость.**
