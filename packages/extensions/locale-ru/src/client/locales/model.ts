@@ -26,4 +26,5 @@ export const ru = {
   'empty.models': 'Нет доступных моделей.',
   'blocked.composer': 'Текущая модель недоступна — выберите модель, чтобы продолжить',
   'empty.efforts': 'У этой модели нет уровней рассуждений.',
+  'error.sessionInUse': 'This session is already in use, possibly by another running DSH instance (such as dsh web or the desktop app). Quit other running DSH instances and try again.',
 } satisfies Record<LocaleNamespaceMap['model'], string>

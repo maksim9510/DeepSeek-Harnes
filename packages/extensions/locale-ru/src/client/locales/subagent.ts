@@ -42,4 +42,6 @@ export const ru = {
   'readonly.title': 'Этот субагент пока доступен только для чтения',
   'readonly.oneShot.body': 'Одноразовые задачи не принимают последующих сообщений; здесь можно просмотреть полную запись выполнения.',
   'readonly.body': 'Родительская сессия не в сети; откройте её заново, чтобы продолжить отправку сообщений.',
+  'open.sidebar': 'Open {label} in sidebar',
+  'sidebar.chat': 'Chat',
 } satisfies Record<LocaleNamespaceMap['subagent'], string>

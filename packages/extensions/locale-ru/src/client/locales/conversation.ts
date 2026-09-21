@@ -163,4 +163,6 @@ export const ru = {
   'queue.sending': 'Отправка…',
   'input.send.queue': 'Поставить в очередь',
   'input.send.steer': 'Вставить сообщение',
+  'error.sessionInUse': 'This session is already in use, possibly by another running DSH instance (such as dsh web or the desktop app). Quit other running DSH instances and try again.',
+  'terminal.noExitCode': 'no exit code',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>

@@ -68,4 +68,5 @@ export const ru = {
   'time.months': '{n} мес',
   'time.years': '{n} г',
   'time.ago': '{t} назад',
+  'groupBy.workspaceTree': 'Workspace Tree',
 } satisfies Record<LocaleNamespaceMap['workspace'], string>

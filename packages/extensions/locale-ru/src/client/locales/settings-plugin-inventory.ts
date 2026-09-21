@@ -41,4 +41,7 @@ export const ru = {
   'active': 'Выполняется',
   'failed': 'Не удалось запустить',
   'unloading': 'Выгружается',
+  'clientSyncFailed': 'Some plugins could not sync on this page. Host enablement is unchanged.',
+  'clientSyncRetry': 'Retry this page',
+  'clientSyncing': 'Syncing plugins on this page…',
 } satisfies Record<LocaleNamespaceMap['settings.pluginInventory'], string>

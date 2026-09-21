@@ -65,8 +65,6 @@ export const ru = {
   advancedHint: 'Остальные поля находятся в settings.yaml; измените соответствующий раздел напрямую.',
   modelCapacityInvalid: 'Объём должен быть числом, при необходимости с суффиксом K или M.',
   modelDuplicate: 'Каждый ID модели может встречаться только один раз.',
-  modelContextWindow: 'Окно контекста',
-  modelMaxTokens: 'Максимум выходных токенов',
   fetchModels: 'Получить доступные модели',
   fetching: 'Запрос к провайдеру…',
   fetchNeedsBaseUrl: 'Сначала укажите базовый URL, затем получите список.',
@@ -108,4 +106,7 @@ export const ru = {
   deepSeekChatBaseUrl: 'https://api.deepseek.com',
   deepSeekMessagesBaseUrl: 'https://api.deepseek.com/anthropic',
   deepSeekEndpointHint: 'Используйте адрес, совместимый с настроенным подключением.',
+  modelInputImage: 'Image',
+  modelInputText: 'Text',
+  modelInputTypes: 'Input types',
 } satisfies Record<LocaleNamespaceMap['settings.models'], string>

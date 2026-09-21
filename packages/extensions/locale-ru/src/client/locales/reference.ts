@@ -16,4 +16,5 @@ export const ru = {
   'time.days': '{n} д',
   'time.months': '{n} мес',
   'time.years': '{n} г',
+  'section.subagents': 'Subagents',
 } satisfies Record<ReferenceKey, string>
