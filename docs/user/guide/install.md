@@ -14,7 +14,7 @@ It also deploys the fork's [web search shim](../../../tools/dsh-search-shim/READ
 python3 DeepSeek-install.py install
 ```
 
-The install runs non-interactively. On a system that already has the checkout, it pulls the latest changes instead of cloning again.
+The install runs non-interactively. On a system that already has the checkout, it updates that checkout instead of cloning again: the remote that serves the requested repository is identified by URL, and the branch is fast-forwarded onto it. The fork's synchronized layout keeps `origin` on upstream, whose branch has a different name, so an update never depends on the local branch's own tracking configuration. A checkout carrying commits the remote does not have is left untouched, with the commands that resolve it printed.
 
 ## The doctor
 

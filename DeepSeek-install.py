@@ -43,7 +43,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -61,6 +61,10 @@ ASTRA_NPM_MIN = (10, 0, 0)
 PNPM_VERSION = "11.7.0"
 #: Default source repository (the Russian-localization fork).
 DEFAULT_REPO = "https://github.com/maksim9510/DeepSeek-Harnes.git"
+#: Branch the fork publishes its synchronized work on.  The fork's checkout
+#: layout keeps 'origin' on upstream, whose branch is named differently, so an
+#: update cannot rely on the local branch's own tracking configuration.
+FORK_BRANCH = "main"
 #: Directory that receives the checkout, relative to the user home.
 SOURCE_DIR_NAME = ".dsh/source"
 #: Build record written by a complete `pnpm run build` (see scripts/build.ts).
@@ -1087,16 +1091,128 @@ def _prepare_pnpm(pin: str) -> bool:
     return True
 
 
+#: 'github.com/owner/repo' inside an https or ssh remote URL.
+_REPO_ID_RE = re.compile(r"github\.com[/:]([^/]+)/([^/\s]+?)(?:\.git)?$")
+
+
+def _repo_id(url: str) -> Optional[Tuple[str, str]]:
+    """Lowercase (owner, repo) of a github.com remote URL, or None.
+
+    A non-GitHub or malformed URL has no identity to compare, and the caller
+    treats it as not serving the requested repository.
+    """
+    match = _REPO_ID_RE.search(url)
+    if not match:
+        return None
+    return match.group(1).lower(), match.group(2).lower()
+
+
+def _git_capture(source_dir: Path, args: List[str]) -> Tuple[int, str]:
+    """Run one git command against source_dir and capture its output."""
+    return run_capture(["git", "-C", str(source_dir), *args])
+
+
+def _remote_serving(source_dir: Path, wanted: Optional[Tuple[str, str]]) -> Optional[str]:
+    """Name of the remote that serves wanted, preferring origin.
+
+    The fork's synchronized layout has 'origin' on upstream and 'personal' on
+    the fork, so the remote to update from is found by identity rather than by
+    name.
+    """
+    if wanted is None:
+        return None
+    code, out = _git_capture(source_dir, ["remote"])
+    if code != 0:
+        return None
+    for name in sorted(out.split(), key=lambda entry: entry != "origin"):
+        code, url = _git_capture(source_dir, ["remote", "get-url", name])
+        if code == 0 and _repo_id(url.strip()) == wanted:
+            return name
+    return None
+
+
+def _current_branch(source_dir: Path) -> Optional[str]:
+    """Short name of the checked-out branch, or None on a detached HEAD."""
+    code, out = _git_capture(source_dir, ["rev-parse", "--abbrev-ref", "HEAD"])
+    name = out.strip()
+    return name if code == 0 and name not in ("", "HEAD") else None
+
+
+def _remote_head_branch(source_dir: Path, remote: str) -> Optional[str]:
+    """Branch the remote's own HEAD points at, when its ref is recorded."""
+    code, out = _git_capture(source_dir, ["symbolic-ref", "--short", f"refs/remotes/{remote}/HEAD"])
+    ref = out.strip()
+    if code != 0 or "/" not in ref:
+        return None
+    return ref.split("/", 1)[1]
+
+
+def _update_ref(source_dir: Path, remote: str) -> Optional[str]:
+    """The remote/branch ref an existing checkout should advance to.
+
+    The fork's published branch wins; a remote with no such branch falls back
+    to its own HEAD, then to the branch the checkout already has.
+    """
+    candidates = [FORK_BRANCH, _remote_head_branch(source_dir, remote), _current_branch(source_dir)]
+    for branch in candidates:
+        if not branch:
+            continue
+        ref = f"{remote}/{branch}"
+        code, _ = _git_capture(source_dir, ["rev-parse", "--verify", "--quiet", ref])
+        if code == 0:
+            return ref
+    return None
+
+
+def _update_existing_repo(repo: str, source_dir: Path) -> bool:
+    """Fast-forward an existing checkout onto the requested repository.
+
+    The update never reads the local branch's tracking configuration: in the
+    fork's layout that configuration points the local branch at origin/main,
+    while origin is upstream and publishes master, so a plain 'git pull
+    --ff-only' fails with a missing ref.  Updating from the remote that
+    actually serves repo is correct in both layouts.
+    """
+    remote = _remote_serving(source_dir, _repo_id(repo))
+    if remote is None:
+        log_step(f"Repository already present at {source_dir}; pulling latest")
+        proc = run(["git", "-C", str(source_dir), "pull", "--ff-only"])
+        return proc.returncode == 0
+
+    log_step(f"Repository already present at {source_dir}; updating from '{remote}'")
+    code, out = _git_capture(source_dir, ["fetch", remote])
+    if code != 0:
+        log_fail(f"git fetch {remote} failed:\n{out.strip()}")
+        return False
+
+    ref = _update_ref(source_dir, remote)
+    if ref is None:
+        log_fail(f"no branch to update from '{remote}'; check the remote by hand: git remote -v")
+        return False
+
+    code, before = _git_capture(source_dir, ["rev-parse", "HEAD"])
+    code, out = _git_capture(source_dir, ["merge", "--ff-only", ref])
+    if code != 0:
+        log_fail(f"Cannot fast-forward onto {ref}:\n{out.strip()}")
+        log_warn("The checkout carries commits that the remote does not, so it needs a deliberate merge:")
+        log(f"    cd {source_dir} && git status && git log --oneline {ref}..HEAD")
+        return False
+    code, after = _git_capture(source_dir, ["rev-parse", "HEAD"])
+    if before.strip() == after.strip():
+        log_ok(f"Already up to date with {ref}")
+    else:
+        log_ok(f"Updated to {after.strip()[:10]} from {ref}")
+    return True
+
+
 def _ensure_git_repo(repo: str, source_dir: Path) -> bool:
-    """Clone (or update) the repository into source_dir."""
+    """Clone the repository into source_dir, or update an existing checkout."""
     if not has_command("git"):
         log_fail("git is required; run doctor first.")
         return False
     source_dir.parent.mkdir(parents=True, exist_ok=True)
     if path_exists(source_dir / ".git"):
-        log_step(f"Repository already present at {source_dir}; pulling latest")
-        proc = run(["git", "-C", str(source_dir), "pull", "--ff-only"])
-        return proc.returncode == 0
+        return _update_existing_repo(repo, source_dir)
     log_step(f"Cloning {repo} into {source_dir}")
     proc = run(["git", "clone", repo, str(source_dir)])
     return proc.returncode == 0
