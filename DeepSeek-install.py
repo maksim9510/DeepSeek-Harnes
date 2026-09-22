@@ -710,13 +710,13 @@ class Doctor:
         )
 
     def check_build_record(self) -> CheckResult:
-        record = self.source_dir / CLIENT_BUILD_RECORD
-        if path_exists(record):
-            return CheckResult("build", True, detail="artifacts built (client-build-environment.json present)")
+        stale = _build_artifacts_missing_or_stale(self.source_dir) if path_exists(self.source_dir) else "no checkout"
+        if stale is None:
+            return CheckResult("build", True, detail="artifacts built from the current commit")
         return CheckResult(
             "build",
             False,
-            detail="artifacts not built",
+            detail=f"artifacts not built for this commit: {stale}",
             fix=f"cd {self.source_dir} && pnpm run build",
         )
 
@@ -1297,12 +1297,51 @@ def _install_dependencies(source_dir: Path, platform_info: Platform) -> bool:
     return proc.returncode == 0
 
 
+def _recorded_commit(source_dir: Path) -> Optional[str]:
+    """Short commit recorded by the last complete build, or None when unusable.
+
+    The record is written by ``pnpm run build`` (scripts/client-build-environment.ts)
+    and carries the source commit its artifacts were built from.
+    """
+    try:
+        record = json.loads((source_dir / CLIENT_BUILD_RECORD).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    environment = record.get("environment") if isinstance(record, dict) else None
+    if not isinstance(environment, dict):
+        return None
+    value = environment.get("DSH_CLIENT_COMMIT_HASH")
+    return value if isinstance(value, str) and value else None
+
+
+def _build_artifacts_missing_or_stale(source_dir: Path) -> Optional[str]:
+    """Reason the artifacts cannot be reused, or None when the build may be skipped.
+
+    Presence alone is not enough: the checkout is fast-forwarded onto a newer
+    commit before the build step, so a record left by an earlier build would
+    otherwise let stale artifacts pass as current.
+    """
+    if not path_exists(source_dir / CLIENT_BUILD_RECORD):
+        return "no build record"
+    recorded = _recorded_commit(source_dir)
+    if recorded is None:
+        return f"{CLIENT_BUILD_RECORD} is unreadable or carries no commit"
+    code, head = _git_capture(source_dir, ["rev-parse", "HEAD"])
+    if code != 0:
+        return "cannot resolve the checkout commit"
+    head = head.strip()
+    if not head.startswith(recorded):
+        return f"artifacts were built from {recorded}, checkout is at {head[:7]}"
+    return None
+
+
 def _build(source_dir: Path) -> bool:
-    """Run the repository build; skip when artifacts are already present."""
-    if path_exists(source_dir / CLIENT_BUILD_RECORD):
-        log_ok("Build artifacts already present; skipping build")
+    """Run the repository build; skip only when current artifacts are present."""
+    stale = _build_artifacts_missing_or_stale(source_dir)
+    if stale is None:
+        log_ok("Build artifacts already present for this commit; skipping build")
         return True
-    log_step("Building DeepSeek Harness (pnpm run build)")
+    log_step(f"Building DeepSeek Harness ({stale})")
     proc = run(
         _pnpm_command() + ["run", "build"],
         env={"COREPACK_ENABLE_DOWNLOAD_PROMPT": "0"},

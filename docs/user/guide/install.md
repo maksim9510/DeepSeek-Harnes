@@ -25,7 +25,7 @@ python3 DeepSeek-install.py doctor
 python3 DeepSeek-install.py doctor --fix
 ```
 
-The doctor checks Python, Node.js, npm, Corepack, pnpm, git, system packages, the checkout state, installed dependencies, build artifacts, the API key, and network reachability. It also inspects the bare `pnpm` on PATH: a standalone pnpm whose version differs from the pinned one breaks the project in both directions — older than 10 it silently rewrites `pnpm-lock.yaml` without the `pnpm-workspace.yaml` overrides, newer it refuses to switch to the pinned version under Corepack and fails the nested `pnpm --filter …` calls in `pnpm run build`. The doctor flags such a shim and, on `--fix`, repoints it at Corepack. The report is also available as JSON for scripting:
+The doctor checks Python, Node.js, npm, Corepack, pnpm, git, system packages, the checkout state, installed dependencies, build artifacts current for the checked-out commit, the API key, and network reachability. It also inspects the bare `pnpm` on PATH: a standalone pnpm whose version differs from the pinned one breaks the project in both directions — older than 10 it silently rewrites `pnpm-lock.yaml` without the `pnpm-workspace.yaml` overrides, newer it refuses to switch to the pinned version under Corepack and fails the nested `pnpm --filter …` calls in `pnpm run build`. The doctor flags such a shim and, on `--fix`, repoints it at Corepack. The report is also available as JSON for scripting:
 
 ```sh
 python3 DeepSeek-install.py doctor --json

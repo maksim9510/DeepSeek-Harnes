@@ -25,7 +25,7 @@ python3 DeepSeek-install.py doctor
 python3 DeepSeek-install.py doctor --fix
 ```
 
-医生检查 Python、Node.js、npm、Corepack、pnpm、git、系统软件包、检出状态、已安装依赖、构建产物、API 密钥和网络可达性。它还检查 PATH 上的裸 `pnpm`：版本与固定版本不同的独立 pnpm 会从两个方向破坏项目——低于 10 会悄悄重写 `pnpm-lock.yaml`（丢失 `pnpm-workspace.yaml` 的 `overrides`），更新则会拒绝在 Corepack 下切换到固定版本，使 `pnpm run build` 中的嵌套 `pnpm --filter …` 调用失败。医生会标记此类 shim，并在 `--fix` 时把它重新指向 Corepack。报告也可以 JSON 形式输出以便脚本使用：
+医生检查 Python、Node.js、npm、Corepack、pnpm、git、系统软件包、检出状态、已安装依赖、与检出版本一致的构建产物、API 密钥和网络可达性。它还检查 PATH 上的裸 `pnpm`：版本与固定版本不同的独立 pnpm 会从两个方向破坏项目——低于 10 会悄悄重写 `pnpm-lock.yaml`（丢失 `pnpm-workspace.yaml` 的 `overrides`），更新则会拒绝在 Corepack 下切换到固定版本，使 `pnpm run build` 中的嵌套 `pnpm --filter …` 调用失败。医生会标记此类 shim，并在 `--fix` 时把它重新指向 Corepack。报告也可以 JSON 形式输出以便脚本使用：
 
 ```sh
 python3 DeepSeek-install.py doctor --json
