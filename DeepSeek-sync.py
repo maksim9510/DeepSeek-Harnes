@@ -107,6 +107,10 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("tools/dsh-search-shim/server.mjs", "web_search_20250305"),
     ("tools/dsh-search-shim/provider-route.mjs", "resolveActiveRoute"),
     ("DeepSeek-install.py", "SHIM_SOURCE_DIR"),
+    # Browser-tool provisioning is fork-only too: a merge that dropped it
+    # would leave the agent without a browser.  The marker is the constant the
+    # two provisioning steps and their doctor checks share.
+    ("DeepSeek-install.py", "BROWSER_BUNDLE"),
     # Upstream made runtime resolution mode the CLI default, but it only works
     # without a tsx tsconfig-paths remap; the source launcher needs link mode.
     # The marker is the defaulting expression itself: the explanatory comment

@@ -1,0 +1,20 @@
+# Experimental browser tools for the Web profile. Applied after dsh-web-app so
+# the Web runtime, the browser-session credential, and the managed shell
+# environment already exist when this layer mounts.
+#
+# The provider slot is exclusive: `ctx.browserUse.register` accepts exactly one
+# provider, so this file must insert exactly one provider row. A second one does
+# not shadow the first — the registering fiber's setup fails — but the first
+# provider stays mounted, so the failure is reported rather than corrected.
+
+- insert:
+    - id: browser-use
+      name: '@deepseek-ai/dsh-browser-use'
+    - id: browser-provider
+      name: '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp'
+      config:
+        mode: launch
+        headless: true
+        toolCallTimeoutMs: 120000
+    - id: browser-use-profile-glue
+      name: '@deepseek-ai/dsh-experimental-browser-use-profile'

@@ -1,7 +1,9 @@
 /** Russian language definition and the per-namespace ru dictionary registry.
  * Dictionary files sit beside this one, one per namespace. */
 
+import { ru as agentTeam } from './agent-team.ts'
 import { ru as approval } from './approval.ts'
+import { ru as archivedSessions } from './archived-sessions.ts'
 import { ru as chat } from './chat.ts'
 import { ru as command } from './command.ts'
 import { ru as common } from './common.ts'
@@ -9,12 +11,17 @@ import { ru as conversation } from './conversation.ts'
 import { ru as cordis } from './cordis.ts'
 import { ru as deliverables } from './deliverables.ts'
 import { ru as directoryBrowser } from './directory-browser.ts'
+import { ru as documentHtml } from './document-html.ts'
+import { ru as documentMarkdown } from './document-markdown.ts'
+import { ru as documentPreview } from './document-preview.ts'
 import { ru as feedback } from './feedback.ts'
 import { ru as goal } from './goal.ts'
 import { ru as job } from './job.ts'
 import { ru as model } from './model.ts'
+import { ru as openInApp } from './open-in-app.ts'
 import { ru as permissionAccess } from './permission-access.ts'
 import { ru as plan } from './plan.ts'
+import { ru as pluginManager } from './plugin-manager.ts'
 import { ru as question } from './question.ts'
 import { ru as reference } from './reference.ts'
 import { ru as scheduleCatalog } from './schedule-catalog.ts'
@@ -28,6 +35,14 @@ import { ru as settingsPluginInventory } from './settings-plugin-inventory.ts'
 import { ru as settingsPlugins } from './settings-plugins.ts'
 import { ru as settingsTheme } from './settings-theme.ts'
 import { ru as sidebar } from './sidebar.ts'
+import { ru as sidebarBrowser } from './sidebar-browser.ts'
+import { ru as sidebarCode } from './sidebar-code.ts'
+import { ru as sidebarFiles } from './sidebar-files.ts'
+import { ru as sidebarImage } from './sidebar-image.ts'
+import { ru as sidebarOffice } from './sidebar-office.ts'
+import { ru as sidebarPdf } from './sidebar-pdf.ts'
+import { ru as sidebarRight } from './sidebar-right.ts'
+import { ru as sidebarTerminal } from './sidebar-terminal.ts'
 import { ru as skill } from './skill.ts'
 import { ru as slashMenu } from './slash-menu.ts'
 import { ru as subagent } from './subagent.ts'
@@ -48,6 +63,7 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'settings.plugins': settingsPlugins,
   'settings.pluginInventory': settingsPluginInventory,
   'settings.agentPreset': settingsAgentPreset,
+  'settings.archivedSessions': archivedSessions,
   'settings.permission': settingsPermission,
   'permission.access': permissionAccess,
   'trajectory': trajectory,
@@ -71,6 +87,20 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'approval': approval,
   'deliverables': deliverables,
   'sidebar': sidebar,
+  'sidebarRight': sidebarRight,
+  'sidebarBrowser': sidebarBrowser,
+  'sidebarFiles': sidebarFiles,
+  'sidebarCodePreview': sidebarCode,
+  'sidebarImage': sidebarImage,
+  'sidebarOffice': sidebarOffice,
+  'sidebarPdf': sidebarPdf,
+  'sidebarTerminal': sidebarTerminal,
+  'sidebarDocumentPreview': documentPreview,
+  'documentHtml': documentHtml,
+  'documentMarkdown': documentMarkdown,
+  'agent-team': agentTeam,
+  'pluginManager': pluginManager,
+  'open-in-app': openInApp,
   'session-log-download': sessionLogDownload,
   'directory-browser': directoryBrowser,
 }

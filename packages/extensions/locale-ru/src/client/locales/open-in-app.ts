@@ -1,0 +1,47 @@
+/** ru dictionary for the `open-in-app` namespace: the session-header "open workspace in application" control. */
+
+import type {} from '@deepseek-ai/dsh-client-ui-open-in-app/client'
+import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
+
+/** Russian dictionary, checked complete against the open-in-app namespace key union. */
+export const ru = {
+  'open.title': 'Открыть рабочее пространство в {app}',
+  'open.tooltip': 'Открыть локально',
+  'open.error': 'Не удалось открыть',
+  'menu.toggle': 'Выбрать приложение',
+  'menu.aria': 'Открыть в',
+  'app.cursor': 'Cursor',
+  'app.vscode': 'VS Code',
+  'app.vscodeinsiders': 'VS Code Insiders',
+  'app.windsurf': 'Windsurf',
+  'app.zed': 'Zed',
+  'app.sublimetext': 'Sublime Text',
+  'app.xcode': 'Xcode',
+  'app.androidstudio': 'Android Studio',
+  'app.intellij': 'IntelliJ IDEA',
+  'app.pycharm': 'PyCharm',
+  'app.webstorm': 'WebStorm',
+  'app.phpstorm': 'PhpStorm',
+  'app.goland': 'GoLand',
+  'app.rider': 'Rider',
+  'app.rustrover': 'RustRover',
+  'app.fork': 'Fork',
+  'app.sourcetree': 'Sourcetree',
+  'app.github': 'GitHub Desktop',
+  'app.tower': 'Tower',
+  'app.gitkraken': 'GitKraken',
+  'app.smartgit': 'SmartGit',
+  'app.sublimemerge': 'Sublime Merge',
+  'app.ghostty': 'Ghostty',
+  'app.warp': 'Warp',
+  'app.iterm': 'iTerm2',
+  'app.kitty': 'kitty',
+  'app.windowsterminal': 'Windows Terminal',
+  'app.gitbash': 'Git Bash',
+  'app.gnometerminal': 'GNOME Terminal',
+  'app.konsole': 'Konsole',
+  'app.finder': 'Finder',
+  'app.explorer': 'Проводник',
+  'app.filemanager': 'Файлы',
+  'app.terminal': 'Терминал',
+} satisfies Record<LocaleNamespaceMap['open-in-app'], string>

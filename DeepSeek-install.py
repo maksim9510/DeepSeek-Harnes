@@ -82,6 +82,24 @@ SHIM_PORT = 24881
 #: repository itself has a higher floor.
 SHIM_NODE_MIN = (18, 0, 0)
 
+#: Optional bundle that hands the agent a browser tool: selected in the web
+#: profile so the Web UI's browser panel is drivable without a manual
+#: `dsh plugin` step.  The package is built from the checkout and installed as
+#: a runtime dependency of the dsh application, which is what makes the
+#: launcher resolve it.
+BROWSER_BUNDLE = "@deepseek-ai/dsh-experimental-browser-use-profile"
+#: Profile whose ``dsh.profile.bundles`` list selects the browser bundle.
+WEB_PROFILE = "web"
+#: ``playwright-core`` prefix whose CLI downloads the Chromium revision the
+#: fork's browser providers drive.  ``apps/web`` dev-depends on an older
+#: playwright whose ``install chromium`` fetches a different revision, so the
+#: CLI is globbed out of the .pnpm store instead of resolving ``playwright``
+#: by name.
+PLAYWRIGHT_CORE_PREFIX = "playwright-core@1.63"
+#: Chromium revision that playwright-core release installs, as the directory
+#: name in the browser cache.
+CHROMIUM_REVISION = "chromium-1243"
+
 #: Astra Linux is Debian-based but ships an old npm; the official Node.js
 #: distribution must be used there instead of the distro package.
 ASTRA_OS_RELEASE = "/etc/astra_version"
@@ -852,6 +870,54 @@ class Doctor:
             )
         return CheckResult("search-shim", True, detail=f"running on port {SHIM_PORT} with the active unit")
 
+    def check_browser(self) -> CheckResult:
+        """Report whether the Chromium the browser tool drives is present.
+
+        The browser-tool providers launch the Chromium revision their own
+        playwright-core pins, so a checkout whose dependencies installed but
+        whose browser was never downloaded leaves the agent without a browser.
+        A checkout without that playwright-core is not a defect.
+        """
+        if _chromium_installed():
+            return CheckResult("chromium", True, detail=f"{CHROMIUM_REVISION} present in {_ms_playwright_cache()}")
+        if _playwright_cli(self.source_dir) is None:
+            return CheckResult("chromium", True, detail=f"no {PLAYWRIGHT_CORE_PREFIX}* playwright-core — check skipped")
+        return CheckResult(
+            "chromium",
+            False,
+            detail=f"{CHROMIUM_REVISION} is missing from {_ms_playwright_cache()}",
+            fix="python3 DeepSeek-install.py doctor --fix",
+            probe=self.check_browser,
+        )
+
+    def check_browser_bundle(self) -> CheckResult:
+        """Report whether the web profile selects the browser bundle.
+
+        Without the selection the agent has no browser tool in the Web UI even
+        though the bundle is installed.  A checkout or home without the bundle
+        is not a defect.
+        """
+        if not _bundle_installed(self.source_dir):
+            return CheckResult("browser-bundle", True, detail="no browser bundle in this checkout — check skipped")
+        manifest_path = _profile_dir() / "package.json"
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return CheckResult(
+                "browser-bundle",
+                True,
+                detail=f"no readable {WEB_PROFILE} profile manifest yet — check skipped",
+            )
+        if _browser_bundle_selected(manifest):
+            return CheckResult("browser-bundle", True, detail=f"{WEB_PROFILE} profile selects {BROWSER_BUNDLE}")
+        return CheckResult(
+            "browser-bundle",
+            False,
+            detail=f"{WEB_PROFILE} profile does not select {BROWSER_BUNDLE}",
+            fix="python3 DeepSeek-install.py doctor --fix",
+            probe=self.check_browser_bundle,
+        )
+
     def check_lockfile(self) -> CheckResult:
         """Detect a pnpm frozen-lockfile mismatch in the checkout.
 
@@ -908,6 +974,8 @@ class Doctor:
             self.check_build_record(),
             self.check_lockfile(),
             self.check_search_shim(),
+            self.check_browser(),
+            self.check_browser_bundle(),
             self.check_env_key(),
             self.check_network(),
         ]
@@ -964,6 +1032,10 @@ class Doctor:
             return True    # lockfile regeneration inside the checkout
         if result.name == "search-shim":
             return True    # redeploying the shim from the checkout is automatic
+        if result.name == "chromium":
+            return True    # the browser download is local, non-interactive
+        if result.name == "browser-bundle":
+            return True    # one bundle name appended to the profile manifest
         if result.name == "packages":
             return not result.auto_fixed  # distro package install
         return False
@@ -981,6 +1053,12 @@ class Doctor:
             if result.name == "search-shim":
                 _deploy_shim(self.source_dir)
                 return True
+            if result.name == "chromium":
+                _provision_chromium(self.source_dir)
+                return _chromium_installed()
+            if result.name == "browser-bundle":
+                _enable_optional_bundle(self.source_dir)
+                return self.check_browser_bundle().ok
             if result.name == "packages":
                 return self._fix_packages()
         except (OSError, subprocess.SubprocessError) as exc:
@@ -1488,6 +1566,206 @@ def _deploy_shim(source_dir: Path) -> None:
         log(f"    inspect: journalctl --user -u {SHIM_UNIT_NAME} -n 40")
 
 
+def _ms_playwright_cache() -> Path:
+    """Chromium cache directory shared by every playwright installation."""
+    override = os.environ.get("XDG_CACHE_HOME", "").strip()
+    base = Path(override).expanduser() if override else Path.home() / ".cache"
+    return base / "ms-playwright"
+
+
+def _chromium_installed() -> bool:
+    """Whether the wanted Chromium revision is already in the cache."""
+    cache = _ms_playwright_cache()
+    if path_exists(cache / CHROMIUM_REVISION / "INSTALLATION_COMPLETE"):
+        return True
+    # The marker file is a playwright implementation detail; the revision
+    # directory alone also means the download landed.
+    return path_exists(cache / CHROMIUM_REVISION)
+
+
+def _playwright_cli(source_dir: Path) -> Optional[Path]:
+    """The ``playwright-core`` CLI script that installs Chromium.
+
+    The store name carries the exact version, so the directory is globbed and
+    the CLI that pins ``CHROMIUM_REVISION`` is preferred; a store holding only
+    another release falls back to its newest entry.
+    """
+    store = source_dir / "node_modules" / ".pnpm"
+    candidates = sorted(path for path in store.glob(f"{PLAYWRIGHT_CORE_PREFIX}*/node_modules/playwright-core/cli.js") if path.is_file())
+    if not candidates:
+        return None
+    exact = [path for path in candidates if _chromium_revision_of(path) == CHROMIUM_REVISION]
+    return exact[0] if exact else candidates[-1]
+
+
+def _chromium_revision_of(cli: Path) -> str:
+    """The Chromium revision the CLI's own ``browsers.json`` pins."""
+    try:
+        data = json.loads((cli.parent / "browsers.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return ""
+    for browser in data.get("browsers", []):
+        if browser.get("name") == "chromium":
+            return f"chromium-{browser.get('revision')}"
+    return ""
+
+
+def _install_chromium(cli: Path) -> bool:
+    """Run one ``playwright-core install chromium``; return whether it worked."""
+    node = shutil.which("node")
+    if node is None:
+        log_warn("Node.js not found; cannot download Chromium for the browser tool.")
+        return False
+    log_step(f"Installing Chromium for the browser tool ({CHROMIUM_REVISION})")
+    code, out = run_capture([node, str(cli), "install", "chromium"])
+    if code == 0:
+        return True
+    log_warn(f"Chromium download failed: {(out or '').strip()[-200:]}")
+    return False
+
+
+def _provision_chromium(source_dir: Path) -> None:
+    """Download the Chromium revision the browser tool drives; never abort.
+
+    A checkout without the browser-use store or without Node.js still installs:
+    the Web UI works without the browser panel, so a failed download is a
+    warning with the doctor command that retries it.
+    """
+    if _chromium_installed():
+        log_ok(f"Chromium for the browser tool is present ({_ms_playwright_cache() / CHROMIUM_REVISION})")
+        return
+    cli = _playwright_cli(source_dir)
+    if cli is None:
+        log_warn(f"No {PLAYWRIGHT_CORE_PREFIX}* playwright-core in {source_dir / 'node_modules/.pnpm'}; skipping the browser download.")
+        return
+    log(f"  using {cli}")
+    if not _install_chromium(cli):
+        log_warn("The browser tool will report a missing browser; retry with: python3 DeepSeek-install.py doctor --fix")
+
+
+def _dsh_home() -> Path:
+    """The Harness home: ``$DSH_HOME`` when set, else ``~/.dsh``."""
+    home = os.environ.get("DSH_HOME", "").strip()
+    return Path(home).expanduser() if home else Path.home() / ".dsh"
+
+
+def _materialize_web_profile(source_dir: Path) -> None:
+    """Create the web profile from its shipped template when it is absent.
+
+    The launcher's own ``--dump-default-config`` initializes the profile from
+    the template and prints the composed configuration without booting a
+    server, so the created files are exactly what ``dsh web`` would write.
+    The source launcher runs from the checkout and needs no build.  A failure
+    (no pnpm, no node, read-only home) is reported and swallowed: the caller
+    re-checks for the manifest, and the Web UI works without the bundle.
+    """
+    env = {
+        "COREPACK_ENABLE_DOWNLOAD_PROMPT": "0",
+        "DSH_HOME": str(_dsh_home()),
+    }
+    try:
+        proc = run(
+            _pnpm_command() + ["dsh", WEB_PROFILE, "--dump-default-config"],
+            capture=True,
+            env=env,
+            cwd=str(source_dir),
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        log_warn(f"Cannot initialize the {WEB_PROFILE} profile: {exc}")
+        return
+    if proc.returncode != 0:
+        log_warn(f"The {WEB_PROFILE} profile launcher failed: {(proc.stdout or '').strip()[-200:]}")
+
+
+def _profile_dir() -> Path:
+    """Directory of the web profile under the Harness home."""
+    return _dsh_home() / "profiles" / WEB_PROFILE
+
+
+def _bundle_installed(source_dir: Path) -> bool:
+    """Whether the dsh application can resolve the browser bundle.
+
+    The launcher resolves a profile bundle from the application first, so the
+    bundle must be a runtime dependency of the app.  It resolves either
+    through the pnpm link in the app's own ``node_modules`` or, before that
+    link exists, from the workspace checkout.
+    """
+    try:
+        manifest = json.loads((source_dir / "apps" / "cli" / "package.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    declared = manifest.get("dependencies")
+    if not isinstance(declared, dict) or BROWSER_BUNDLE not in declared:
+        return False
+    link = source_dir / "apps" / "cli" / "node_modules" / BROWSER_BUNDLE
+    return path_exists(link) or path_exists(source_dir / "packages" / "experimental" / "browser-use-profile")
+
+
+def _browser_bundle_selected(manifest: dict) -> bool:
+    """Whether a parsed profile manifest already lists the browser bundle."""
+    dsh = manifest.get("dsh")
+    if not isinstance(dsh, dict):
+        return False
+    profile = dsh.get("profile")
+    if not isinstance(profile, dict):
+        return False
+    bundles = profile.get("bundles")
+    if not isinstance(bundles, list):
+        return False
+    return BROWSER_BUNDLE in bundles
+
+
+def _enable_optional_bundle(source_dir: Path) -> None:
+    """Select the browser bundle in the web profile; never abort.
+
+    The manifest is edited in place: every other field (``patchReload``,
+    dependencies, the bundle order) is preserved, and a manifest that already
+    selects the bundle is left byte-identical.  A fresh machine has no profile
+    yet, so it is first created from the shipped web template.  An unreadable
+    or uncreatable profile, or a checkout that does not install the bundle, is
+    a warning: the Web UI works without the browser panel.
+    """
+    if not _bundle_installed(source_dir):
+        log_warn(f"{BROWSER_BUNDLE} is not installed in this checkout; the web profile keeps its default bundles.")
+        return
+    profile_dir = _profile_dir()
+    manifest_path = profile_dir / "package.json"
+    if not path_exists(manifest_path):
+        # A fresh machine has no profile yet; create it from the shipped
+        # template so one installer run leaves the bundle selected.
+        _materialize_web_profile(source_dir)
+    if not path_exists(manifest_path):
+        log_warn(f"No {WEB_PROFILE} profile manifest at {manifest_path}; retry with `python3 DeepSeek-install.py doctor --fix`, or run `pnpm dsh web` once.")
+        return
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        log_warn(f"Cannot read {manifest_path}: {exc}")
+        return
+    if not isinstance(manifest, dict):
+        log_warn(f"{manifest_path} does not hold a JSON object; leaving it untouched.")
+        return
+    if _browser_bundle_selected(manifest):
+        log_ok(f"{WEB_PROFILE} profile already selects {BROWSER_BUNDLE}")
+        return
+    dsh = manifest.get("dsh")
+    dsh = dict(dsh) if isinstance(dsh, dict) else {}
+    profile = dsh.get("profile")
+    profile = dict(profile) if isinstance(profile, dict) else {}
+    bundles = profile.get("bundles")
+    bundles = list(bundles) if isinstance(bundles, list) else []
+    bundles.append(BROWSER_BUNDLE)
+    profile["bundles"] = bundles
+    dsh["profile"] = profile
+    manifest["dsh"] = dsh
+    try:
+        manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        log_warn(f"Cannot write {manifest_path}: {exc}")
+        return
+    log_ok(f"{WEB_PROFILE} profile now selects {BROWSER_BUNDLE}")
+
+
 def _write_windows_launcher(source_dir: Path) -> Optional[Path]:
     """Create a dsh.cmd launcher for Windows (no-op elsewhere)."""
     if os.name != "nt":
@@ -1514,7 +1792,7 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
     # enable — so a fresh machine ends the install with a working pnpm.
     doctor = Doctor(
         platform_info, source_dir, fix=True,
-        fix_names=frozenset({"corepack", "pnpm", "pnpm-shim", "search-shim"}),
+        fix_names=frozenset({"corepack", "pnpm", "pnpm-shim", "search-shim", "chromium", "browser-bundle"}),
     )
     doctor.run_all()
     blocking = [
@@ -1547,6 +1825,8 @@ def install(repo: str, source_dir: Path, platform_info: Platform, skip_build: bo
         return False
     _create_env_file(source_dir)
     _deploy_shim(source_dir)
+    _provision_chromium(source_dir)
+    _enable_optional_bundle(source_dir)
     launcher = _write_windows_launcher(source_dir)
     log_step("Installation complete")
     if launcher:
@@ -1573,6 +1853,12 @@ USAGE
 The install also deploys the fork's web search shim (tools/dsh-search-shim)
 into ~/.dsh/search-shim and registers its systemd user unit, so the Web UI
 has working web search without a separate setup step.
+
+It also equips the agent with a browser tool: the Chromium revision the
+browser providers drive (chromium-1243) is downloaded into the shared
+playwright cache, and the browser-use bundle is selected in the {WEB_PROFILE}
+profile, so the agent can open the Web UI's browser panel and read its
+console errors without a separate setup step.
 
 COMMANDS
     install            Clone, install dependencies, build and prepare the
