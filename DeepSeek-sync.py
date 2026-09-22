@@ -103,6 +103,9 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("tools/dsh-search-shim/server.mjs", "web_search_20250305"),
     ("tools/dsh-search-shim/provider-route.mjs", "resolveActiveRoute"),
     ("DeepSeek-install.py", "SHIM_SOURCE_DIR"),
+    # Upstream made runtime resolution mode the CLI default, but it only works
+    # without a tsx tsconfig-paths remap; the source launcher needs link mode.
+    ("apps/cli/src/profile-boot.ts", "fork-repair"),
 ]
 
 #: Locale dictionaries the ru language pack owns, relative to the ru package's
