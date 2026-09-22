@@ -91,7 +91,7 @@ describe('runProfile with an application-owned profile', () => {
   })
 
   it.each([
-    { selection: 'default', options: {}, mode: 'runtime' },
+    { selection: 'default', options: {}, mode: 'link' },
     { selection: 'link', options: { resolutionMode: 'link' }, mode: 'link' },
     { selection: 'dual', options: { resolutionMode: 'dual' }, mode: 'dual' },
     { selection: 'runtime', options: { resolutionMode: 'runtime' }, mode: 'runtime' },

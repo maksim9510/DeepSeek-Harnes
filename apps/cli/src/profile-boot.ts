@@ -260,7 +260,11 @@ export async function runProfile(options: RunProfileOptions): Promise<{ ctx: Con
   )
 
   const packaged = (process as NodeJS.Process & { pkg?: unknown }).pkg !== undefined
-  const resolutionMode = packaged ? 'runtime' : options.resolutionMode ?? 'runtime'
+  // fork-repair: link stays the source-launch default. Under tsx, runtime mode loads plugin
+  // entries from built lib/ while tsconfig path aliases remap the same packages' transitive
+  // imports to src/, so two module instances define distinct TOOL_RUNTIME_SCHEDULER symbols
+  // and every tool call dies before dispatch on a missing scheduler.
+  const resolutionMode = packaged ? 'runtime' : options.resolutionMode ?? 'link'
   const app: { current?: Context } = {}
   let disposal: Promise<void> | undefined
   const dispose = (): Promise<void> => disposal ??= (async () => {
