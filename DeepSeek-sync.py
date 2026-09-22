@@ -32,7 +32,8 @@ How the sync works
    whenever the fork moved ahead on its own.  Anything else aborts.
 2. ``git fetch origin`` (upstream) and ``git fetch personal`` (the fork).
 3. If ``master`` already contains ``origin/master``, everything is synced;
-   push ``master`` to the fork's ``main`` and exit 0.
+   push ``master`` to the fork's ``main`` and to the backup ``rezerv``
+   branch, then exit 0.
 4. Run the protected-marker audit: every marker below must exist in the
    working tree before the merge.  A missing marker is a human problem —
    the fork changed underneath the script.
@@ -61,13 +62,14 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-__version__ = "1.3.0"
+__version__ = "1.4.0"
 
 UPSTREAM_REMOTE = "origin"
 FORK_REMOTE = "personal"
 UPSTREAM_BRANCH = "master"
 LOCAL_BRANCH = "master"
 FORK_MAIN_BRANCH = "main"
+FORK_BACKUP_BRANCH = "rezerv"
 
 UPSTREAM_URL = "https://github.com/deepseek-ai/deepseek-harness.git"
 #: (owner, repo) pairs in lowercase; GitHub repo ids are case-insensitive.
@@ -1172,6 +1174,36 @@ def push_to_main() -> Optional[str]:
     return None
 
 
+def push_to_rezerv() -> Optional[str]:
+    """Push master to the fork's backup branch (rezerv).
+
+    ``rezerv`` is maintained as a copy of ``main``: after ``main`` is
+    updated, the same commit is mirrored to ``rezerv``.  If ``rezerv`` moved
+    on its own, a normal push is rejected; re-fetch and force-with-lease so
+    the backup stays a faithful copy of ``main``.
+    """
+    code, out = run_capture(
+        ["git", "push", FORK_REMOTE, f"{LOCAL_BRANCH}:{FORK_BACKUP_BRANCH}"]
+    )
+    if code == 0:
+        return None
+    fetch_code, _ = run_capture(["git", "fetch", FORK_REMOTE])
+    if fetch_code != 0:
+        return (
+            f"git fetch {FORK_REMOTE} не удался после отклонённого push в {FORK_BACKUP_BRANCH}:\n"
+            f"  Команда для повторения: git push {FORK_REMOTE} {LOCAL_BRANCH}:{FORK_BACKUP_BRANCH}"
+        )
+    code, out = run_capture(
+        ["git", "push", "--force-with-lease", FORK_REMOTE, f"{LOCAL_BRANCH}:{FORK_BACKUP_BRANCH}"]
+    )
+    if code != 0:
+        return (
+            f"Повторный git push {FORK_REMOTE} {LOCAL_BRANCH}:{FORK_BACKUP_BRANCH} не удался:\n"
+            f"{out.strip()}"
+        )
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -1257,9 +1289,13 @@ def _sync() -> int:
         log("Upstream не обновлялся; проверяю push в main")
         problem = push_to_main()
         if problem:
-            write_human_report("Синхронизация остановлена: push", [problem])
+            write_human_report("Синхронизация остановлена: push в main", [problem])
             return 1
-        log_ok("Всё синхронизировано, main актуален")
+        problem = push_to_rezerv()
+        if problem:
+            write_human_report("Синхронизация остановлена: push в rezerv", [problem])
+            return 1
+        log_ok("Всё синхронизировано, main и rezerv актуальны")
         return 0
 
     log_step(f"Апстрим впереди на {ahead} коммит(ов)")
@@ -1316,10 +1352,15 @@ def _sync() -> int:
     log_step("Пуш в main")
     problem = push_to_main()
     if problem:
-        write_human_report("Синхронизация остановлена: push", [problem])
+        write_human_report("Синхронизация остановлена: push в main", [problem])
+        return 1
+    log_step("Пуш в rezerv (бэкап-копия main)")
+    problem = push_to_rezerv()
+    if problem:
+        write_human_report("Синхронизация остановлена: push в rezerv", [problem])
         return 1
 
-    log_ok("Синхронизация завершена: master слит с апстримом и запушен в main")
+    log_ok("Синхронизация завершена: master слит с апстримом и запушен в main и rezerv")
     return 0
 
 
