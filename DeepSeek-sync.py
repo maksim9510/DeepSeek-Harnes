@@ -16,6 +16,8 @@ Protected local work
 * The universal installer (DeepSeek-install.py and its docs)
 * The local web search shim (tools/dsh-search-shim), which upstream has no
   counterpart for
+* The CLI source-launch resolution default (apps/cli/src/profile-boot.ts):
+  upstream made runtime mode the default, which breaks the tsx source launch
 * The lockfile fix that keeps pnpm install working
 
 How the sync works
@@ -105,7 +107,10 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("DeepSeek-install.py", "SHIM_SOURCE_DIR"),
     # Upstream made runtime resolution mode the CLI default, but it only works
     # without a tsx tsconfig-paths remap; the source launcher needs link mode.
-    ("apps/cli/src/profile-boot.ts", "fork-repair"),
+    # The marker is the defaulting expression itself: the explanatory comment
+    # in that file survives an upstream revert of the line, so a comment-only
+    # marker reports a lost repair as present.
+    ("apps/cli/src/profile-boot.ts", "options.resolutionMode ?? 'link'"),
 ]
 
 #: Locale dictionaries the ru language pack owns, relative to the ru package's
@@ -629,6 +634,8 @@ def merge_upstream() -> Tuple[bool, Optional[str]]:
         "  # разрешите конфликты в перечисленных файлах, сохранив наши правки:",
         "  #   README.md (русский), packages/extensions/locale-ru, DeepSeek-install.py,",
         "  #   tools/dsh-search-shim (локальный поисковый шим),",
+        "  #   apps/cli/src/profile-boot.ts (режим разрешения пакетов для",
+        "  #     запуска из исходников: сохраните 'link' по умолчанию),",
         "  git add <файлы> && git commit",
         "  python3 DeepSeek-sync.py   # продолжит: проверки и пуш в main",
     ]
