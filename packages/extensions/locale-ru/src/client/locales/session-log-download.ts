@@ -7,6 +7,7 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 export const ru = {
   'header.more': 'Другие действия',
   'menu.download': 'Скачать журнал сессии',
+  'menu.feedback': 'Обратная связь',
   'dialog.preparingTitle': 'Экспорт сессии',
   'dialog.preparingDescription': 'Готовится ZIP-архив с текущей сессией, её суб-сессиями и вложениями.',
   'dialog.successTitle': 'Скачивание сессии началось',

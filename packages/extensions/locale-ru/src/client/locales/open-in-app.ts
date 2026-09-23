@@ -6,10 +6,13 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 /** Russian dictionary, checked complete against the open-in-app namespace key union. */
 export const ru = {
   'open.title': 'Открыть рабочее пространство в {app}',
-  'open.tooltip': 'Открыть локально',
-  'open.error': 'Не удалось открыть',
-  'menu.toggle': 'Выбрать приложение',
-  'menu.aria': 'Открыть в',
+  'path.appDefault': 'Приложение по умолчанию',
+  'path.appsError': 'Не удалось получить список приложений',
+  'path.open': 'Открыть',
+  'path.more': 'Ещё',
+  'path.reveal': 'Показать в проводнике',
+  'path.openError': 'Не удалось открыть путь',
+  'path.revealError': 'Не удалось показать путь',
   'app.cursor': 'Cursor',
   'app.vscode': 'VS Code',
   'app.vscodeinsiders': 'VS Code Insiders',

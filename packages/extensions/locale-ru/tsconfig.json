@@ -12,7 +12,7 @@
       "path": "../../../vendor/cordis"
     },
     {
-      "path": "../../client/locale"
+      "path": "../../client/locale/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-slots"
@@ -24,13 +24,13 @@
       "path": "../../client/ui-approval"
     },
     {
-      "path": "../../client/ui-chat"
+      "path": "../../client/ui-chat/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-commands"
     },
     {
-      "path": "../../client/ui-conversation"
+      "path": "../../client/ui-conversation/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-deliverables/tsconfig.client.json"
@@ -63,7 +63,7 @@
       "path": "../../client/ui-plan"
     },
     {
-      "path": "../../client/ui-plugin-manager"
+      "path": "../../client/ui-plugin-manager/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-reference"
@@ -72,7 +72,7 @@
       "path": "../../client/ui-schedule"
     },
     {
-      "path": "../../client/ui-settings-general"
+      "path": "../../client/ui-settings-general/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-settings-models"
@@ -84,13 +84,10 @@
       "path": "../../client/ui-settings-plugins"
     },
     {
-      "path": "../../client/ui-settings-unarchive-sessions"
-    },
-    {
       "path": "../../client/ui-sidebar"
     },
     {
-      "path": "../../client/ui-sidebar-browser"
+      "path": "../../client/ui-sidebar-browser/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-sidebar-documentpreview/tsconfig.client.json"
@@ -111,7 +108,7 @@
       "path": "../../client/ui-subagent"
     },
     {
-      "path": "../../client/ui-theme"
+      "path": "../../client/ui-theme/tsconfig.client.json"
     },
     {
       "path": "../../client/ui-trajectory"

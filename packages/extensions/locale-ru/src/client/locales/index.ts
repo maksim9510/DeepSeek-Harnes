@@ -3,7 +3,6 @@
 
 import { ru as agentTeam } from './agent-team.ts'
 import { ru as approval } from './approval.ts'
-import { ru as archivedSessions } from './archived-sessions.ts'
 import { ru as chat } from './chat.ts'
 import { ru as command } from './command.ts'
 import { ru as common } from './common.ts'
@@ -63,7 +62,6 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'settings.plugins': settingsPlugins,
   'settings.pluginInventory': settingsPluginInventory,
   'settings.agentPreset': settingsAgentPreset,
-  'settings.archivedSessions': archivedSessions,
   'settings.permission': settingsPermission,
   'permission.access': permissionAccess,
   'trajectory': trajectory,
