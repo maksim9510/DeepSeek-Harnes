@@ -37,7 +37,7 @@ Removing it with `dsh plugin --profile web remove @deepseek-ai/dsh-experimental-
 
 ### What you get
 
-Every Session gains the Playwright MCP browser tools. Because the bundle also publishes `DSH_WEB_AUTH_URL`, a Session can drive the running GUI — open the right-side browser panel, add a tab, click, and read console errors — instead of only reasoning about the page it cannot see. The browser binary is Chromium; the fork's installer provisions the revision the pinned provider expects.
+Every Session gains the Playwright MCP browser tools. Because the bundle also publishes `DSH_WEB_AUTH_URL`, a Session can drive the running GUI — open the right-side browser panel, add a tab, click, and read console errors — instead of only reasoning about the page it cannot see. Selecting the bundle also switches the right Sidebar's built-in Browser on: `dsh-web-app` mounts that row disabled for every profile except `desktop`, and driving a page the user cannot see is a worse answer, so this bundle's later layer enables it. The browser binary is Chromium; the fork's installer provisions the revision the pinned provider expects.
 
 -----
 
@@ -47,15 +47,15 @@ Every Session gains the Playwright MCP browser tools. Because the bundle also pu
 <details>
 <summary>Implementation internals — click to expand</summary>
 
-The package has two runtime parts. [`cordis.patch.yml`](cordis.patch.yml) is an ordered patch over `dsh-web-app`: it inserts `@deepseek-ai/dsh-browser-use`, then the single provider row `@deepseek-ai/dsh-experimental-browser-use-playwright-mcp`, then this package's own glue row. The provider slot is exclusive — `ctx.browserUse.register` throws on a second registration — which is why the patch carries exactly one provider and `tests/profile.spec.ts` asserts that.
+The package has two runtime parts. [`cordis.patch.yml`](cordis.patch.yml) is an ordered patch over `dsh-web-app`: it inserts `@deepseek-ai/dsh-browser-use`, then the single provider row `@deepseek-ai/dsh-experimental-browser-use-playwright-mcp`, then this package's own glue row, and finally re-enables the Sidebar Browser row `dsh-web-app` leaves opt-in (see [What you get](#what-you-get)). The provider slot is exclusive — `ctx.browserUse.register` throws on a second registration — which is why the patch carries exactly one provider and `tests/profile.spec.ts` asserts that.
 
 [`src/index.ts`](src/index.ts) is the glue. It registers one `ctx.shellEnv` contributor declaring `DSH_WEB_AUTH_URL`, whose resolver composes `connection.authenticatedUrl(http://127.0.0.1:<port>)` per tool execution, and one `systemPrompt` section stating that opening that variable is how a browser reaches the GUI. Both contributions `inject` rather than require their services, so a profile without `dsh-web-app` boots with no variable and no section; the resolver withholds the variable unless both the Web server and the connection service are present, so it never publishes the unauthenticated origin under a name that promises a launch token. The launch token lives in process memory only, so the value is resolved fresh and never persisted.
 
 | File | Role |
 |---|---|
-| [`cordis.patch.yml`](cordis.patch.yml) | Ordered Web patch: capability service, one provider, this glue |
+| [`cordis.patch.yml`](cordis.patch.yml) | Ordered Web patch: capability service, one provider, this glue, and the Sidebar Browser opt-in |
 | [`src/index.ts`](src/index.ts) | `DSH_WEB_AUTH_URL` contributor and the browser-surface prompt section |
-| [`tests/profile.spec.ts`](tests/profile.spec.ts) | Asserts the manifest, the row order, and provider exclusivity |
+| [`tests/profile.spec.ts`](tests/profile.spec.ts) | Asserts the manifest, the row order, provider exclusivity, and the composed Sidebar Browser override |
 | — | No runtime invariant companion is published; the exclusive registration owned by `dsh-browser-use` already fails loudly on a second provider. |
 
 </details>

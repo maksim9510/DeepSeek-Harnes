@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import * as yaml from 'js-yaml'
-import { entryListSchema } from '@deepseek-ai/cordis-plugin-include'
+import { applyEntryPatches, entryListSchema, type PatchOptions } from '@deepseek-ai/cordis-plugin-include'
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url))
 
@@ -19,15 +19,18 @@ interface InsertRow {
   config?: Record<string, unknown>
 }
 
-function insertedRows(): InsertRow[] {
+function patchEntries(): PatchOptions[] {
   const manifest = JSON.parse(readFileSync(resolve(ROOT, 'package.json'), 'utf8')) as {
     dsh?: { bundle?: { patch?: string } }
   }
   const patch = manifest.dsh!.bundle!.patch!
-  const parsed = yaml.load(readFileSync(resolve(ROOT, patch), 'utf8'), { schema: entryListSchema }) as {
-    insert?: InsertRow[]
-  }[]
-  return parsed.flatMap(entry => entry.insert ?? [])
+  const parsed: unknown = yaml.load(readFileSync(resolve(ROOT, patch), 'utf8'), { schema: entryListSchema })
+  if (!Array.isArray(parsed)) throw new Error(`${patch} must be a top-level list of patch entries`)
+  return parsed as PatchOptions[]
+}
+
+function insertedRows(): InsertRow[] {
+  return patchEntries().flatMap(entry => (entry.insert ?? []) as InsertRow[])
 }
 
 describe('browser use profile bundle', () => {
@@ -72,5 +75,27 @@ describe('browser use profile bundle', () => {
     ])
     expect(providers[0]?.id).toBe('browser-provider')
     expect(providers[0]?.config?.mode).toBe('launch')
+  })
+
+  it('enables the Web Sidebar Browser that dsh-web-app leaves opt-in', () => {
+    // The subject is the composed result, not this file alone: dsh-web-app's
+    // real layer inserts the row with a `!!js` gate that disables it off
+    // `desktop`, and this bundle's layer — applied after it — must win. The
+    // base layer joins them because web-app overrides base rows by id.
+    const files = [
+      '../../../bundle/base/cordis.patch.yml',
+      '../../../bundle/web-app/cordis.patch.yml',
+      resolve(ROOT, 'cordis.patch.yml'),
+    ].map(file => file.startsWith('..') ? fileURLToPath(new URL(file, import.meta.url)) : file)
+    const layers = files.flatMap((file): PatchOptions[] => {
+      const parsed: unknown = yaml.load(readFileSync(file, 'utf8'), { schema: entryListSchema })
+      if (!Array.isArray(parsed)) throw new Error(`${file} must be a top-level list of patch entries`)
+      return parsed as PatchOptions[]
+    })
+    const rows = applyEntryPatches([], structuredClone(layers), (message: string) => { throw new Error(message) })
+    const browsers = rows.filter(row => row.id === 'ui-sidebar-browser')
+    expect(browsers).toHaveLength(1)
+    expect(browsers[0]?.disabled).toBe(false)
+    expect(browsers[0]?.name).toBe('@deepseek-ai/dsh-client-ui-sidebar-browser')
   })
 })

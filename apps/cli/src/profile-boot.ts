@@ -10,7 +10,7 @@
  * @module @deepseek-ai/dsh/profile-boot
  */
 
-import { existsSync, mkdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { FiberState, type Context } from '@deepseek-ai/cordis'
@@ -188,8 +188,6 @@ interface ComposedProfile {
  * then the telemetry switch.
  * @param name - the profile name.
  * @param patchFiles - `--patch` overlay paths, in argv order.
- * @param resolutionMode - module fallback backend: link materializes on-disk
- *   fallback links; runtime and dual install the runtime resolution.
  * @param fromDefaultProfile - shipped template for a missing named profile.
  * @param resolvedProfile - application-owned profile and installation.
  * @returns the profile and its patch layers.
@@ -197,7 +195,6 @@ interface ComposedProfile {
 async function composeProfile(
   name: string,
   patchFiles: readonly string[],
-  resolutionMode: 'link' | 'dual' | 'runtime',
   fromDefaultProfile?: string,
   resolvedProfile?: ResolvedProfileRuntime,
 ): Promise<ComposedProfile> {
@@ -205,27 +202,8 @@ async function composeProfile(
   if (resolvedProfile !== undefined) writeFileSync(join(profile.dir, PROFILE_ROOT_FILENAME), PROFILE_ROOT_CONFIG)
   const resolutionOptions = { installAnchor: resolvedProfile?.installAnchor ?? INSTALL_ANCHOR, profile }
   const resolution = await createRuntimeResolution(resolutionOptions)
-  // Link backend: materialize the profile's module-fallback links on disk so a tsx
-  // source launch resolves every plugin package through real directories.
-  if (resolvedProfile === undefined && resolutionMode === 'link') healProfileModuleFallback(profile, resolution)
   const overlays = patchFiles.flatMap(file => loadOverlayPatches(NAME, resolve(file)))
   return { profile, resolution, overlays }
-}
-
-/**
- * Materialize the profile's module-fallback links for a link-backend launch.
- * Symlinks each resolved package directory into `<profile>/.dsh-module-fallback/node_modules`
- * so the tsx source launch resolves plugin packages through real directories.
- * @param profile - the active profile.
- * @param resolution - the immutable package table to project.
- */
-function healProfileModuleFallback(profile: Profile, resolution: RuntimeResolution): void {
-  const base = join(profile.dir, '.dsh-module-fallback', 'node_modules')
-  mkdirSync(base, { recursive: true })
-  for (const entry of resolution.entries) {
-    const dest = join(base, entry.name)
-    if (!existsSync(dest)) symlinkSync(entry.packageDir, dest, 'dir')
-  }
 }
 
 /** An application-owned profile and its independent installation fallback. */
@@ -252,11 +230,6 @@ export interface RunProfileOptions {
   args: readonly string[]
   /** Application-owned package runtime, scoped to plugin package operations. */
   packageManager?: ProfileContext['packageManager']
-  /**
-   * Module fallback backend; link stays the source-launch default. Plain Node
-   * callers may override it; pkg executables always use runtime.
-   */
-  resolutionMode?: 'link' | 'dual' | 'runtime'
 }
 
 /**
@@ -276,12 +249,6 @@ export async function runProfile(options: RunProfileOptions): Promise<{ ctx: Con
     (message) => { process.stderr.write(`${NAME}: ${message}\n`) },
   )
 
-  const packaged = (process as NodeJS.Process & { pkg?: unknown }).pkg !== undefined
-  // fork-repair: link stays the source-launch default. Under tsx, runtime mode loads plugin
-  // entries from built lib/ while tsconfig path aliases remap the same packages' transitive
-  // imports to src/, so two module instances define distinct TOOL_RUNTIME_SCHEDULER symbols
-  // and every tool call dies before dispatch on a missing scheduler.
-  const resolutionMode = packaged ? 'runtime' : options.resolutionMode ?? 'link'
   const app: { current?: Context } = {}
   let disposal: Promise<void> | undefined
   const dispose = (): Promise<void> => disposal ??= (async () => {
@@ -294,7 +261,7 @@ export async function runProfile(options: RunProfileOptions): Promise<{ ctx: Con
   })()
   try {
     const composed = await composeProfile(
-      options.profile, options.patchFiles, resolutionMode, options.fromDefaultProfile, options.resolvedProfile,
+      options.profile, options.patchFiles, options.fromDefaultProfile, options.resolvedProfile,
     )
     const appReady = createAppReady()
     const shutdown = createProcessShutdown(dispose)
@@ -330,7 +297,7 @@ export async function runProfile(options: RunProfileOptions): Promise<{ ctx: Con
       // Before any config-tree entry mounts, so plugins resolve all launch-time
       // environment values from the same immutable launch snapshot.
       hostCtx.provide(DSH_LAUNCH_ENVIRONMENT_KEY, options.environment)
-      await hostCtx.plugin(PluginPackages, resolutionMode === 'link' ? {} : {
+      await hostCtx.plugin(PluginPackages, {
         resolution: composed.resolution,
       })
       // The command line and bounded exit request are launcher facts available

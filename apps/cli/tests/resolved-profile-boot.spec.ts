@@ -86,12 +86,7 @@ describe('runProfile with an application-owned profile', () => {
     }
   })
 
-  it.each([
-    { selection: 'default', options: {}, mode: 'link' },
-    { selection: 'link', options: { resolutionMode: 'link' }, mode: 'link' },
-    { selection: 'dual', options: { resolutionMode: 'dual' }, mode: 'dual' },
-    { selection: 'runtime', options: { resolutionMode: 'runtime' }, mode: 'runtime' },
-  ] as const)('uses shared layers, $selection resolution, and shutdown', async ({ options, mode }) => {
+  it('uses shared layers, runtime resolution, and shutdown', async () => {
     const home = mkdtempSync(join(tmpdir(), 'dsh-resolved-profile-'))
     homes.push(home)
     mkdirSync(join(home, 'runtime'))
@@ -143,17 +138,12 @@ describe('runProfile with an application-owned profile', () => {
       const { shutdown } = await runProfile({
         environment, profile: 'desktop', resolvedProfile: runtime,
         patchFiles: [overlay], args: ['--port', '0', '--no-open'],
-        ...options,
       })
       expect(installProxyFromEnvironment).toHaveBeenCalledWith(environment, expect.any(Function))
       const resolution = vi.mocked(createRuntimeResolution).mock.settledResults
         .find(result => result.type === 'fulfilled')?.value
       expect(resolution?.profileDir).toBe(home)
-      if (mode === 'link') {
-        expect(plugin).toHaveBeenCalledWith(PluginPackages, {})
-      } else {
-        expect(plugin).toHaveBeenCalledWith(PluginPackages, { resolution })
-      }
+      expect(plugin).toHaveBeenCalledWith(PluginPackages, { resolution })
       expect(lstatSync(localPackageDir).isDirectory()).toBe(true)
       expect(readFileSync(join(localPackageDir, 'package.json'), 'utf8')).toBe(localManifest)
       const requireFromProfile = createRequire(join(home, 'package.json'))

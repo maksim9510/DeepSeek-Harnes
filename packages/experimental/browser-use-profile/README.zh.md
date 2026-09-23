@@ -37,7 +37,7 @@ dsh plugin --profile web add @deepseek-ai/dsh-experimental-browser-use-profile
 
 ### 你能得到什么
 
-每个 Session 都会获得 Playwright MCP 浏览器工具。由于该组合包同时发布 `DSH_WEB_AUTH_URL`，Session 可以驱动正在运行的 GUI——打开右侧浏览器面板、新增标签页、点击，并读取控制台错误——而不是仅对无法看到的页面进行推理。浏览器二进制为 Chromium；本 fork 的安装器会准备所固定的提供方所需的版本。
+每个 Session 都会获得 Playwright MCP 浏览器工具。由于该组合包同时发布 `DSH_WEB_AUTH_URL`，Session 可以驱动正在运行的 GUI——打开右侧浏览器面板、新增标签页、点击，并读取控制台错误——而不是仅对无法看到的页面进行推理。选用该组合包也会打开右侧边栏内置的浏览器：`dsh-web-app` 对除 `desktop` 以外的所有 profile 都以禁用状态挂载该行，而让 Session 驱动用户看不到的页面是更差的答案，因此本组合包更靠后的层会启用它。浏览器二进制为 Chromium；本 fork 的安装器会准备所固定的提供方所需的版本。
 
 -----
 
@@ -47,15 +47,15 @@ dsh plugin --profile web add @deepseek-ai/dsh-experimental-browser-use-profile
 <details>
 <summary>实现内部细节——点击展开</summary>
 
-该包包含两个运行时部分。[`cordis.patch.yml`](cordis.patch.yml) 是作用于 `dsh-web-app` 的有序 patch：它依次插入 `@deepseek-ai/dsh-browser-use`、单个提供方行 `@deepseek-ai/dsh-experimental-browser-use-playwright-mcp`，以及本包自身的胶水行。提供方槽位是独占的——第二次注册时 `ctx.browserUse.register` 会抛出异常——因此该 patch 只携带一个提供方，并由 `tests/profile.spec.ts` 断言这一点。
+该包包含两个运行时部分。[`cordis.patch.yml`](cordis.patch.yml) 是作用于 `dsh-web-app` 的有序 patch：它依次插入 `@deepseek-ai/dsh-browser-use`、单个提供方行 `@deepseek-ai/dsh-experimental-browser-use-playwright-mcp`，以及本包自身的胶水行，最后重新启用 `dsh-web-app` 保持可选开启的侧边栏浏览器行（见[你能得到什么](#what-you-get)）。提供方槽位是独占的——第二次注册时 `ctx.browserUse.register` 会抛出异常——因此该 patch 只携带一个提供方，并由 `tests/profile.spec.ts` 断言这一点。
 
 [`src/index.ts`](src/index.ts) 是胶水代码。它注册一个 `ctx.shellEnv` 贡献者，声明 `DSH_WEB_AUTH_URL`，其 resolver 在每次工具执行时组合 `connection.authenticatedUrl(http://127.0.0.1:<port>)`；并注册一个 `systemPrompt` 段落，说明打开该变量是浏览器访问 GUI 的方式。两个贡献都 `inject` 而非 require 其服务，因此没有 `dsh-web-app` 的 profile 启动时既无变量也无该段落；resolver 仅在 Web server 与 connection 服务同时存在时才发布该变量，因此绝不会以承诺携带启动 token 的名称发布未认证的源地址。启动 token 仅存在于进程内存中，因此该值每次重新解析且从不持久化。
 
 | 文件 | 职责 |
 |---|---|
-| [`cordis.patch.yml`](cordis.patch.yml) | 有序 Web patch：能力服务、一个提供方、本胶水 |
+| [`cordis.patch.yml`](cordis.patch.yml) | 有序 Web patch：能力服务、一个提供方、本胶水，以及侧边栏浏览器开启项 |
 | [`src/index.ts`](src/index.ts) | `DSH_WEB_AUTH_URL` 贡献者与浏览器 surface 提示词段落 |
-| [`tests/profile.spec.ts`](tests/profile.spec.ts) | 断言 manifest、行顺序与提供方独占性 |
+| [`tests/profile.spec.ts`](tests/profile.spec.ts) | 断言 manifest、行顺序、提供方独占性，以及组合后的侧边栏浏览器覆盖 |
 | — | 不发布运行时 invariant companion；`dsh-browser-use` 拥有的独占注册在出现第二个提供方时已会显式失败。 |
 
 </details>

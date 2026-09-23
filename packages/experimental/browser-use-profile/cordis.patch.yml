@@ -18,3 +18,12 @@
         toolCallTimeoutMs: 120000
     - id: browser-use-profile-glue
       name: '@deepseek-ai/dsh-experimental-browser-use-profile'
+
+# Upstream makes the right Sidebar's built-in Browser opt-in per profile, so a
+# Web profile mounts the panel disabled. This profile selects the bundle for
+# model browser tools; a Session that can drive a page but not show the user the
+# panel it is driving is a worse answer, so the bundle also opts the panel in.
+# The row carries no `name`: it overrides the entry dsh-web-app already
+# inserted, and naming it would make this bundle resolve the client package.
+- id: ui-sidebar-browser
+  disabled: false
