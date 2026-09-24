@@ -775,15 +775,118 @@ def _dict_block(text: str, var: str) -> Optional[str]:
 
 _LOCALE_KEY_RE = re.compile(r"^\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*:")
 _LOCALE_KEY_VALUE_RE = re.compile(r"^\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*:\s*'((?:[^'\\]|\\.)*)'")
+# A key token is preceded by line-start, a comma, or an opening brace, so every
+# ``key:`` on a (possibly multi-key) line is captured, not just the first.
+# Leading indentation is consumed after the prefix group (``^`` is zero-width).
+_KEY_TOKEN_RE = re.compile(r"(?:^|\s*,|\s*\{)\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*:")
+# Spread lines may carry a trailing comma (``...VAR,``).
+_SPREAD_LINE_RE = re.compile(r"^\s*\.\.\.([A-Za-z_$][\w$.]*)\s*,?\s*$")
+
+
+def _line_string_spans(line: str) -> List[Tuple[int, int]]:
+    """Spans of quoted string literals on a dictionary line.
+
+    Lets key detection ignore ``word:`` tokens that sit inside a value string
+    (e.g. ``'mode': 'Access mode, current: {name}'`` must not yield a phantom
+    ``current`` key).
+    """
+    spans: List[Tuple[int, int]] = []
+    i = 0
+    n = len(line)
+    while i < n:
+        ch = line[i]
+        if ch in ("'", '"', "`"):
+            quote = ch
+            j = i + 1
+            while j < n:
+                if line[j] == "\\":
+                    j += 2
+                    continue
+                if line[j] == quote:
+                    j += 1
+                    break
+                j += 1
+            spans.append((i, j))
+            i = j
+        else:
+            i += 1
+    return spans
 
 
 def _block_keys(block: str) -> Set[str]:
-    """Dictionary keys of a literal body; quoted (``'a.b'``) and unquoted forms."""
+    """Dictionary keys of a literal body; quoted (``'a.b'``) and unquoted forms.
+
+    Catches every ``key:`` token on a line (keys may be comma-separated on a
+    single line), not just the first.  Tokens strictly inside a quoted value
+    string are ignored, so ``'mode': 'Access mode, current: {name}'`` does not
+    contribute a phantom ``current`` key.
+    """
     keys: Set[str] = set()
     for line in block.splitlines():
-        match = _LOCALE_KEY_RE.match(line)
-        if match:
+        spans = _line_string_spans(line)
+        for match in _KEY_TOKEN_RE.finditer(line):
+            if any(s < match.start() < e for s, e in spans):
+                continue
             keys.add(match.group(1) or match.group(2))
+    return keys
+
+
+def _const_object_keys(text: str, var: str) -> Optional[Set[str]]:
+    """Keys of a ``const VAR = { ... }`` object literal (exported or not)."""
+    m = re.search(r"(?:export\s+)?const\s+" + re.escape(var) + r"\b[^=]*=\s*\{", text)
+    if not m:
+        return None
+    start = m.end() - 1  # index of the opening brace
+    depth, i = 1, start + 1
+    while i < len(text):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return _block_keys(text[start + 1:i])
+        i += 1
+    return None
+
+
+def _spread_vars(block: str) -> List[str]:
+    """Names referenced by ``...VAR`` spread lines inside a dict body."""
+    vars_ = []
+    for line in block.splitlines():
+        m = _SPREAD_LINE_RE.match(line)
+        if m:
+            vars_.append(m.group(1))
+    return vars_
+
+
+def _spread_target_keys(text: str, file_path: Path, var: str) -> Optional[Set[str]]:
+    """Keys contributed by a ``...VAR`` spread, resolving same-file or imported const objects."""
+    keys = _const_object_keys(text, var)
+    if keys is not None:
+        return keys
+    m = re.search(
+        r"import\s*\{[^}]*\b" + re.escape(var) + r"\b[^}]*\}\s*from\s*['\"]([^'\"]+)['\"]",
+        text,
+    )
+    if not m:
+        return None
+    target = (file_path.parent / m.group(1)).resolve()
+    if target.suffix == "":
+        target = target.with_suffix(".ts")
+    try:
+        target_text = target.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return _const_object_keys(target_text, var)
+
+
+def _expanded_dict_keys(text: str, file_path: Path, block: str) -> Set[str]:
+    """Dict keys including keys contributed by ``...VAR`` spreads."""
+    keys = _block_keys(block)
+    for var in _spread_vars(block):
+        extra = _spread_target_keys(text, file_path, var)
+        if extra:
+            keys |= extra
     return keys
 
 
@@ -869,34 +972,56 @@ def _zh_keys_by_namespace() -> Dict[str, Set[str]]:
         return None
 
     def dict_keys_in_file(f: Path, var: str) -> Optional[Set[str]]:
-        block = _dict_block(texts.get(f, ""), var)
-        if block is None and f not in texts:
+        text = texts.get(f)
+        if text is None:
             try:
-                block = _dict_block(f.read_text(encoding="utf-8"), var)
+                text = f.read_text(encoding="utf-8", errors="replace")
             except OSError:
-                block = None
-        return _block_keys(block) if block is not None else None
+                return None
+        block = _dict_block(text, var)
+        return _expanded_dict_keys(text, f, block) if block is not None else None
 
     def dict_var_in_pkg(pkg: Path, var: str) -> Optional[Set[str]]:
         """Keys of `export const <var> = {` in pkg, only when unambiguous."""
         hits = []
         for f in _locale_source_files(pkg):
-            block = _dict_block(f.read_text(encoding="utf-8", errors="replace"), var)
+            text = f.read_text(encoding="utf-8", errors="replace")
+            block = _dict_block(text, var)
             if block is not None:
-                hits.append(_block_keys(block))
+                hits.append(_expanded_dict_keys(text, f, block))
         return hits[0] if len(hits) == 1 else None
 
     # 3. Namespace → owner packages via *_NS / NS constants and register/bind.
     ns_pkgs: Dict[str, Set[Path]] = {}
     ns_any_ns_const_file_rexn = re.compile(
         r"(?<![A-Za-z0-9_])(?:[A-Za-z_$][\w$]*_NS|NS)\s*=\s*'([^']+)'")
+    ns_const_def_re = re.compile(
+        r"(?<![A-Za-z0-9_])([A-Za-z_$][\w$]*(?:_NS|NS))\s*=\s*'([^']+)")
     ns_register = re.compile(r"locale\.(?:register|bind)\(\s*'([^']+)'")
+    # A registration that names the zh dictionary variable the namespace
+    # actually uses: explicit form ``{ zh: accessZh, en: accessEn }`` or the
+    # shorthand form ``{ zh, en }`` (the variable is ``zh`` itself).
+    ns_register_obj = re.compile(
+        r"locale\.register\(\s*(?:'([^']+)'|([A-Za-z_$][\w$.]*))\s*,\s*\{\s*(?:zh\s*:\s*([A-Za-z_$][\w$.]*)|\bzh\b)")
+    # Pass 1: collect every ``*_NS``/``NS`` constant value across all files,
+    # so pass 2 can resolve registrations that reference constants defined in
+    # alphabetically-later files.
+    ns_const_values: Dict[str, str] = {}
+    for f, text in texts.items():
+        for name, value in ns_const_def_re.findall(text):
+            ns_const_values[name] = value
+    ns_reg_dict: Dict[str, Tuple[Path, str]] = {}
     for f, text in texts.items():
         pkg = pkg_root_of(f)
         if pkg is None:
             continue
         for ns in ns_any_ns_const_file_rexn.findall(text) + ns_register.findall(text):
             ns_pkgs.setdefault(ns, set()).add(pkg)
+        for m in ns_register_obj.finditer(text):
+            ns = m.group(1) or ns_const_values.get(m.group(2))
+            if ns:
+                var = m.group(3) or "zh"
+                ns_reg_dict[ns] = (f, var)
     for ns, (f, _) in ns_expr.items():
         pkg = pkg_root_of(f)
         if pkg is not None:
@@ -909,7 +1034,14 @@ def _zh_keys_by_namespace() -> Dict[str, Set[str]]:
         if expr is not None:
             _, expr_str = expr
             if expr_str.startswith("keyof typeof "):
-                resolved = dict_var_in_pkg(next(iter(pkgs)), expr_str.split("keyof typeof ", 1)[1].strip())
+                # Try every candidate package (deterministic order) and use
+                # the first one that actually defines the referenced dict.
+                var = expr_str.split("keyof typeof ", 1)[1].strip()
+                for pkg in sorted(pkgs):
+                    keys = dict_var_in_pkg(pkg, var)
+                    if keys is not None:
+                        resolved = keys
+                        break
             else:
                 alias = expr_str
                 if alias in union_literal:
@@ -917,6 +1049,17 @@ def _zh_keys_by_namespace() -> Dict[str, Set[str]]:
                 elif alias in alias_dict:
                     f, var = alias_dict[alias]
                     resolved = dict_keys_in_file(f, var)
+        if resolved is None and ns in ns_reg_dict:
+            # The registration names the zh dictionary variable the namespace
+            # actually uses; prefer it over the plain `zh` fallback.  The
+            # variable may be defined inline in the registration file or in
+            # the owner package's locale source file.
+            f, var = ns_reg_dict[ns]
+            resolved = dict_keys_in_file(f, var)
+            if resolved is None:
+                pkg = pkg_root_of(f)
+                if pkg is not None:
+                    resolved = dict_var_in_pkg(pkg, var)
         if resolved is None:
             # No entry, or it could not be pinned: use the owner package's
             # single zh dictionary, else the plain `zh` of any one candidate.
@@ -993,6 +1136,7 @@ def _en_text_for(namespaces: List[str], key: str) -> Optional[str]:
                     return m.group(3)
         return None
     roots = [r for r in (REPO_ROOT / "packages" / "client",
+                         REPO_ROOT / "packages" / "experimental",
                          REPO_ROOT / "packages" / "extensions") if r.exists()]
     if namespaces:
         ns_pattern = re.compile(
