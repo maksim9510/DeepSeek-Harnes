@@ -652,6 +652,18 @@ function internalModules(): InternalModules {
   }
 }
 
+/**
+ * Write a replacement stack onto an error, tolerating Node's internal resolver
+ * errors that publish `stack` as a read-only own property without a setter.
+ * @param error - The error whose stack should be replaced.
+ * @param value - Replacement stack text.
+ */
+function setStack(error: Error, value: string): void {
+  const desc = Object.getOwnPropertyDescriptor(error, 'stack')
+  if (desc !== undefined && desc.set !== undefined) desc.set.call(error, value)
+  else Object.defineProperty(error, 'stack', { value, enumerable: false, configurable: true, writable: true })
+}
+
 function throwWithImporter(error: unknown, routedParent: string, parent: string): never {
   const code = (error as NodeJS.ErrnoException).code
   if (error instanceof Error && (code === 'ERR_MODULE_NOT_FOUND' || code === 'ERR_PACKAGE_PATH_NOT_EXPORTED')) {
@@ -662,7 +674,7 @@ function throwWithImporter(error: unknown, routedParent: string, parent: string)
     const stack = error.stack
     error.message = message
     /* v8 ignore next -- Node's resolver errors always carry a stack */
-    if (stack !== undefined) error.stack = stack.replace(originalMessage, message)
+    if (stack !== undefined) setStack(error, stack.replace(originalMessage, message))
   }
   throw error
 }
@@ -685,7 +697,7 @@ function throwWithoutCjsAnchor(error: unknown, anchor: string): never {
     resolved.requireStack = remaining
     const stack = error.stack
     /* v8 ignore next -- Node's resolver errors always carry a stack */
-    if (stack !== undefined) error.stack = stack.replace(originalMessage, error.message)
+    if (stack !== undefined) setStack(error, stack.replace(originalMessage, error.message))
   }
   throw error
 }
