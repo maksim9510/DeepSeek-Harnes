@@ -55,4 +55,5 @@ export const ru = {
   'body.output': 'Результат',
   'body.copy': 'Копировать',
   'body.copied': 'Скопировано',
+  'a11y.preparing': 'Preparing a Cordis tool call',
 } satisfies Record<LocaleNamespaceMap['cordis'], string>

@@ -63,4 +63,5 @@ export const ru = {
   'diff.unchanged': 'Both sides hold the same lines',
   'diff.coarse': 'Line comparison timed out; shown as a whole-file replacement',
   'diff.truncated': 'Showing the first {count} lines',
+  'row.preparing': 'Preparing deliverables',
 } satisfies Record<LocaleNamespaceMap['deliverables'], string>

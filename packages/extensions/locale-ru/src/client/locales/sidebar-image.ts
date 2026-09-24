@@ -5,15 +5,15 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 
 /** Russian dictionary, checked complete against the sidebarImage namespace key union. */
 export const ru = {
-  zoomControls: 'Управление масштабом',
-  zoomMenu: 'Выбрать масштаб',
-  zoomOut: 'Уменьшить',
-  zoomIn: 'Увеличить',
-  zoomFitWidth: 'По ширине',
-  zoomValue: '{percent}%',
   title: 'Изображение',
   preview: 'Предпросмотр изображения: {name}',
   loading: 'Чтение…',
   failed: 'Не удалось показать это изображение.',
   unsupported: 'Для предпросмотра изображения нужен полный файл.',
+  zoomControls: 'Управление масштабом',
+  zoomMenu: 'Выбор масштаба',
+  zoomOut: 'Уменьшить масштаб',
+  zoomIn: 'Увеличить масштаб',
+  zoomFitWidth: 'Вписать по ширине',
+  zoomValue: '{percent}%',
 } satisfies Record<LocaleNamespaceMap['sidebarImage'], string>

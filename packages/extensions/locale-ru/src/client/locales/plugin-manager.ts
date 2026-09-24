@@ -182,4 +182,11 @@ export const ru = {
   reasonBundleInUse: 'Другая конфигурация всё ещё использует компоненты этого набора; сначала отключите их.',
   reasonStaleApproval: 'Список ожидающих разрешения скриптов изменился; запустите установку заново, чтобы его обновить.',
   reasonOperationError: 'Хост сообщил об ошибке.',
+  installGithubFailedDescription: 'Try another installation source.',
+  installGithubFailedTitle: 'Cannot access GitHub',
+  installGithubTimeoutTitle: 'GitHub connection timed out',
+  installPackageLabel: 'Plugin package name',
+  installUseGithubMirror: 'Use mainland China mirror',
+  reasonIncompatibleVersion: '{plugin} is incompatible with DSH {runtime} (requires {peers}); running it may cause crashes or data loss. Install a plugin version compatible with this DSH.',
+  reasonIncompatibleVersionUnnamed: 'This plugin is incompatible with the running DSH version; running it may cause crashes or data loss.',
 } satisfies Record<LocaleNamespaceMap['pluginManager'], string>

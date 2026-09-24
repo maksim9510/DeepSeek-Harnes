@@ -6,8 +6,6 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 /** Russian dictionary, checked complete against the agent-team namespace key union. */
 export const ru = {
   trigger: 'Команда агентов',
-  refresh: 'Обновить команду',
-  close: 'Закрыть',
   loading: 'Загрузка команды…',
   empty: 'Общих задач пока нет',
   roster: 'Участники',
@@ -27,4 +25,9 @@ export const ru = {
   'status.pending': 'Ожидает',
   'status.in_progress': 'В работе',
   'status.completed': 'Завершена',
+  current: 'Текущий чат',
+  failure: 'Некорректная сохранённая запись команды: {message}',
+  'task.expand': 'Показать больше',
+  'task.collapse': 'Показать меньше',
+  unavailable: 'Команда временно недоступна',
 } satisfies Record<LocaleNamespaceMap['agent-team'], string>

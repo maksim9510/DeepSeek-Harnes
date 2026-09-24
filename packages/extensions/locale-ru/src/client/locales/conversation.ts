@@ -353,4 +353,6 @@ export const ru = {
   'terminal.expandRest': '… ещё {n} строк',
   'terminal.sendInput': '(отправить ввод)',
   'terminal.session': 'Терминал {sessionId}',
+  'row.preparing': 'Preparing tool call',
+  'tool.preparing.content': 'Preparing content {kilobytes}KB',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>

@@ -12,4 +12,5 @@ export const ru = {
   'row.instructions': 'Инструкции',
   'row.inspect': 'Просмотреть',
   'menu.userOnly': 'только для пользователя',
+  'row.preparing': 'Preparing to load a skill',
 } satisfies Record<LocaleNamespaceMap['skill'], string>

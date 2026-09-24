@@ -5,12 +5,6 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 
 /** Russian dictionary, checked complete against the sidebarPdf namespace key union. */
 export const ru = {
-  zoomControls: 'Управление масштабом',
-  zoomMenu: 'Выбрать масштаб',
-  zoomOut: 'Уменьшить',
-  zoomIn: 'Увеличить',
-  zoomFitWidth: 'По ширине',
-  zoomValue: '{percent}%',
   title: 'PDF',
   pageImage: 'Страница {page} PDF',
   loading: 'Чтение…',
@@ -20,4 +14,10 @@ export const ru = {
   workerFailed: 'Процесс отрисовки PDF не смог продолжить работу. Повторите попытку.',
   unsupported: 'Для предпросмотра PDF нужен полный файл.',
   retry: 'Повторить',
+  zoomControls: 'Управление масштабом',
+  zoomMenu: 'Выбор масштаба',
+  zoomOut: 'Уменьшить масштаб',
+  zoomIn: 'Увеличить масштаб',
+  zoomFitWidth: 'Вписать по ширине',
+  zoomValue: '{percent}%',
 } satisfies Record<LocaleNamespaceMap['sidebarPdf'], string>
