@@ -880,6 +880,46 @@ def _spread_target_keys(text: str, file_path: Path, var: str) -> Optional[Set[st
     return _const_object_keys(target_text, var)
 
 
+def _spread_target_body(text: str, file_path: Path, var: str) -> Optional[str]:
+    """Body text of a ``...VAR`` spread target (same-file or imported const object).
+
+    Mirrors _spread_target_keys but returns the object body so its
+    key/value lines can be scanned for English text.
+    """
+    def _body_of(src: str) -> Optional[str]:
+        m = re.search(r"(?:export\s+)?const\s+" + re.escape(var) + r"\b[^=]*=\s*\{", src)
+        if not m:
+            return None
+        start = m.end() - 1
+        depth, i = 1, start + 1
+        while i < len(src):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    return src[start + 1:i]
+            i += 1
+        return None
+    body = _body_of(text)
+    if body is not None:
+        return body
+    m = re.search(
+        r"import\s*\{[^}]*\b" + re.escape(var) + r"\b[^}]*\}\s*from\s*['\"]([^'\"]+)['\"]",
+        text,
+    )
+    if not m:
+        return None
+    target = (file_path.parent / m.group(1)).resolve()
+    if target.suffix == "":
+        target = target.with_suffix(".ts")
+    try:
+        target_text = target.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
+    return _body_of(target_text)
+
+
 def _expanded_dict_keys(text: str, file_path: Path, block: str) -> Set[str]:
     """Dict keys including keys contributed by ``...VAR`` spreads."""
     keys = _block_keys(block)
@@ -1127,13 +1167,24 @@ def _en_text_for(namespaces: List[str], key: str) -> Optional[str]:
     """
     def scan(files: List[Path]) -> Optional[str]:
         for f in files:
-            block = _dict_block(f.read_text(encoding="utf-8", errors="replace"), "en")
+            text = f.read_text(encoding="utf-8", errors="replace")
+            block = _dict_block(text, "en")
             if block is None:
                 continue
             for line in block.splitlines():
                 m = _LOCALE_KEY_VALUE_RE.match(line)
                 if m and (m.group(1) or m.group(2)) == key:
                     return m.group(3)
+            # Keys pulled in by a `...VAR` spread (e.g. `...frequencyEn`)
+            # live in a sibling const object; resolve and scan its body too.
+            for var in _spread_vars(block):
+                body = _spread_target_body(text, f, var)
+                if body is None:
+                    continue
+                for line in body.splitlines():
+                    m = _LOCALE_KEY_VALUE_RE.match(line)
+                    if m and (m.group(1) or m.group(2)) == key:
+                        return m.group(3)
         return None
     roots = [r for r in (REPO_ROOT / "packages" / "client",
                          REPO_ROOT / "packages" / "experimental",
