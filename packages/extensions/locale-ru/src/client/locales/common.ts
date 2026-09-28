@@ -45,4 +45,5 @@ export const ru = {
   'markdown.truncatedCharacters': '… усечено, всего {total} символов',
   'number.thousand': '{value}K',
   'number.million': '{value}M',
+  'workspace.defaultName': 'Рабочая область по умолчанию',
 } satisfies Record<LocaleNamespaceMap['common'], string>

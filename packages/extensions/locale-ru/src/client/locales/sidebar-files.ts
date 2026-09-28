@@ -21,4 +21,5 @@ export const ru = {
   'error.outsideWorkspace': 'Этот каталог находится вне рабочего пространства, поэтому боковая панель его не читает.',
   'error.notDirectory': 'Это не каталог.',
   'error.unavailable': 'Не удалось прочитать: {message}',
+  'shortcut.noSession': 'Сначала выберите сессию',
 } satisfies Record<LocaleNamespaceMap['sidebarFiles'], string>

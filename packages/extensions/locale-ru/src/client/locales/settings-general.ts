@@ -38,4 +38,5 @@ export const ru = {
   'connection.connected': 'Подключено',
   'connection.reconnect': 'Нет подключения, переподключиться сейчас',
   'connection.restart': 'Подключение, перезапустить сейчас',
+  'shortcut.open': 'Открыть настройки',
 } satisfies Record<LocaleNamespaceMap['settings'], string>

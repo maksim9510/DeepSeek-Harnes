@@ -117,4 +117,5 @@ export const ru = {
   onboardingSave: 'Сохранить и продолжить',
   onboardingSaving: 'Сохранение…',
   keyRequired: 'Введите API-ключ, чтобы продолжить.',
+  deepSeekAccount: 'Аккаунт DeepSeek',
 } satisfies Record<LocaleNamespaceMap['settings.models'], string>

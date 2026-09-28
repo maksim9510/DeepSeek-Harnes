@@ -30,4 +30,5 @@ export const ru = {
   'load.failed': 'Не удалось загрузить страницу; обновите её или откройте в системном браузере.',
   'load.failed.detail': 'Не удалось загрузить страницу ({code}): {description}',
   'address.unknown': 'Страница перешла; этот носитель не может прочитать её новый URL.',
+  'shortcut.noSession': 'Сначала откройте сессию',
 } satisfies Record<LocaleNamespaceMap['sidebarBrowser'], string>

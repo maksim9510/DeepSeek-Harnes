@@ -71,7 +71,6 @@ export const ru = {
   registryLegend: 'npm-реестр, из которого скачивается плагин',
   registryDefault: 'Реестр по умолчанию',
   registryNpmmirror: 'Зеркало для Китая',
-  registryWithHost: '{name} ({host})',
   registryCustom: 'Собственный адрес',
   registryCustomPlaceholder: 'https://npm.example.com/',
   registryCustomHint: 'Корпоративный или закрытый npm-реестр; если нужен логин, храните учётные данные в ~/.npmrc на этой машине',
@@ -189,4 +188,7 @@ export const ru = {
   installUseGithubMirror: 'Use mainland China mirror',
   reasonIncompatibleVersion: '{plugin} is incompatible with DSH {runtime} (requires {peers}); running it may cause crashes or data loss. Install a plugin version compatible with this DSH.',
   reasonIncompatibleVersionUnnamed: 'This plugin is incompatible with the running DSH version; running it may cause crashes or data loss.',
+  installTryAnotherWay: 'Попробовать другим способом',
+  refreshError: 'Обновление не удалось. Попробуйте ещё раз.',
+  registryOfficial: 'Официальный реестр npm',
 } satisfies Record<LocaleNamespaceMap['pluginManager'], string>

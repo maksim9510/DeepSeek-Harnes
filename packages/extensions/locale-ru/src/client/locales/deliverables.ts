@@ -64,4 +64,5 @@ export const ru = {
   'diff.coarse': 'Line comparison timed out; shown as a whole-file replacement',
   'diff.truncated': 'Showing the first {count} lines',
   'row.preparing': 'Preparing deliverables',
+  'changes.singleTitle': 'Изменён файл: {name}',
 } satisfies Record<LocaleNamespaceMap['deliverables'], string>

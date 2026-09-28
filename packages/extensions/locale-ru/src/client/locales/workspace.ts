@@ -6,7 +6,6 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 /** Russian dictionary, checked complete against the workspace namespace key union. */
 export const ru = {
   'defaultWorkspace.failed': 'Не удалось создать рабочее пространство по умолчанию. Выберите папку через «Выбрать рабочее пространство».',
-  'defaultWorkspace.title': 'Рабочее пространство по умолчанию',
   'group.ungrouped': 'Без группы',
   'session.new': 'Новая сессия',
   'section.workspaces': 'Рабочие пространства',
@@ -99,7 +98,6 @@ export const ru = {
   'status.compact.planReview': 'План ждёт проверки',
   'status.compact.answer': 'Ждёт ответа',
   'status.completed': 'Завершено',
-  'schedule.active': 'Есть активная задача по расписанию',
   'hover.created': 'Создано {time}',
   'hover.copied': 'Скопировано',
   'date.ymd': '{d}.{m}.{y}',
@@ -110,4 +108,13 @@ export const ru = {
   'time.months': '{n} мес',
   'time.years': '{n} г',
   'time.ago': '{t} назад',
+  'empty.noneArchived': 'Архивных сессий пока нет',
+  'empty.viewOthers': 'Посмотреть другие сессии',
+  'session.untitled': 'Без названия',
+  'shortcut.directoryBusy': 'Выбор или добавление рабочей области',
+  'shortcut.forkFailed': 'Не удалось создать ответвление сессии. Попробуйте ещё раз.',
+  'shortcut.noCompletedTurn': 'В этой сессии нет завершённого хода',
+  'shortcut.noPicker': 'Выборщик каталогов недоступен',
+  'shortcut.noSession': 'Сначала выберите сессию',
+  'viewOptions.hideArchived': 'Скрыть архивные',
 } satisfies Record<LocaleNamespaceMap['workspace'], string>

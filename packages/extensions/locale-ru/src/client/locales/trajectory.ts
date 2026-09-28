@@ -189,4 +189,12 @@ export const ru = {
   'attachment.imageName': 'Image {index}',
   'attachment.list': 'Attachments',
   'layout.imageCount': 'Images ×{count}',
+  'layout.toolAdded': 'Добавлен инструмент: {name}',
+  'layout.toolRemoved': 'Удалён инструмент: {name}',
+  'layout.toolUpdateNotice': 'Инструменты обновлены',
+  'layout.toolsAdded': 'Добавлены: {names}',
+  'layout.toolsAddedCount': 'Добавлено: {count}',
+  'layout.toolsChanged': 'Добавлено: {added}, удалено: {removed}',
+  'layout.toolsRemoved': 'Удалены: {names}',
+  'layout.toolsRemovedCount': 'Удалено: {count}',
 } satisfies Record<LocaleNamespaceMap['trajectory'], string>

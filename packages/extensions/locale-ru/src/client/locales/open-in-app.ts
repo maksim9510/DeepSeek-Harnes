@@ -47,4 +47,7 @@ export const ru = {
   'app.gitbash': 'Git Bash',
   'app.gnometerminal': 'GNOME Terminal',
   'app.konsole': 'Konsole',
+  'open.tooltip': 'Открыть локально',
+  'shortcut.busy': 'Открытие рабочей области',
+  'shortcut.unavailable': 'Текущая рабочая область или локальное приложение недоступны',
 } satisfies Record<LocaleNamespaceMap['open-in-app'], string>
