@@ -42,6 +42,24 @@
 # `dsh.client` rows are the browser roster the modules node half scans into
 # window.__DSH_BOOT__; the modules row is simultaneously a host row.
 - insert:
+    - id: desktop-product-telemetry
+      name: '@deepseek-ai/dsh-host-product-telemetry-otel'
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
+      config:
+        timeoutMillis: 1000
+        exportTimeoutMillis: 1500
+        shutdownTimeoutMillis: 2000
+        serviceName: deepseek-harness-desktop
+        serviceVersion: !!js process.env.DSH_CLIENT_VERSION
+        endpoint: !!js process.env.DSH_PRODUCT_ANALYTICS_OTLP_URL
+
+    - id: product-analytics
+      name: '@deepseek-ai/dsh-client-product-analytics'
+      disabled: !!js "ctx.get('profileContext')?.name !== 'desktop'"
+      config:
+        enabled: true
+        appVersion: !!js process.env.DSH_CLIENT_VERSION
+
     # Host-owned opt-in sampled when a new Web session receives its preset
     # delegation tools. The Plugins page edits this settings namespace.
     - id: subagent-model-selection-settings
@@ -225,6 +243,12 @@
     - id: locale-ru
       name: '@deepseek-ai/dsh-client-locale-ru'
 
+    - id: shortcuts
+      name: '@deepseek-ai/dsh-client-shortcuts'
+
+    - id: ui-shortcuts
+      name: '@deepseek-ai/dsh-client-ui-shortcuts'
+
     - id: ui-layout
       name: '@deepseek-ai/dsh-client-ui-layout'
 
@@ -350,13 +374,6 @@
     # record panels over the session job-output service.
     - id: ui-jobs
       name: '@deepseek-ai/dsh-client-ui-jobs'
-
-    # Read-only active Schedule catalog. The shipped Web graph resolves the
-    # client package but leaves it disabled; the explicit Schedule overlay
-    # enables this same row together with the host Schedule services.
-    - id: ui-schedule
-      name: '@deepseek-ai/dsh-client-ui-schedule'
-      disabled: true
 
     # Goal surface: GoalBar in the input dock over the goal session projection.
     - id: ui-goal

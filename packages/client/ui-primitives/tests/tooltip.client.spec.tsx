@@ -39,6 +39,18 @@ afterEach(() => {
 })
 
 describe('Tooltip', () => {
+  it('updates independent keycaps and the accessible combination while visible', () => {
+    const view = render(<Tooltip label="Reload" shortcutKeys={['⌘', 'R']}><button>anchor</button></Tooltip>)
+    fireEvent.focus(screen.getByText('anchor'))
+    expect(Array.from(screen.getByRole('tooltip', { name: 'Reload ⌘ R' }).querySelectorAll('kbd'), key => key.textContent)).toEqual(['⌘', 'R'])
+    view.rerender(<Tooltip label="Reload" shortcutKeys={['Ctrl', '+', 'R']}><button>anchor</button></Tooltip>)
+    expect(Array.from(screen.getByRole('tooltip', { name: 'Reload Ctrl + R' }).querySelectorAll('kbd'), key => key.textContent)).toEqual(['Ctrl', '+', 'R'])
+    view.rerender(<Tooltip label="Reload" shortcutKeys={[]}><button>anchor</button></Tooltip>)
+    expect(screen.getByRole('tooltip').querySelector('kbd')).toBeNull()
+    fireEvent.click(screen.getByText('anchor'))
+    expect(screen.queryByRole('tooltip')).toBeNull()
+  })
+
   it('fits from observed sizes without synchronously measuring the bubble', () => {
     automaticResize = false
     const measured = vi.spyOn(Element.prototype, 'getBoundingClientRect')
@@ -106,6 +118,85 @@ describe('Tooltip', () => {
     } finally {
       vi.useRealTimers()
     }
+  })
+
+  describe('keyboard focus delay', () => {
+    beforeEach(() => {
+      vi.useFakeTimers()
+      fireEvent.keyDown(document.body, { key: 'Tab' })
+    })
+    afterEach(() => {
+      cleanup()
+      vi.useRealTimers()
+      fireEvent.keyDown(document.body, { key: 'Tab' })
+    })
+
+    it('shows at 500ms, but not at 499ms', () => {
+      const label = vi.fn(() => 'Refresh')
+      render(<Tooltip label={label} delayMs={500} focusDelayMs={500}><button>anchor</button></Tooltip>)
+      fireEvent.focus(screen.getByText('anchor'))
+      expect(screen.queryByRole('tooltip')).toBeNull()
+      act(() => { vi.advanceTimersByTime(499) })
+      expect(screen.queryByRole('tooltip')).toBeNull()
+      expect(label).not.toHaveBeenCalled()
+      act(() => { vi.advanceTimersByTime(1) })
+      expect(screen.getByRole('tooltip').textContent).toBe('Refresh')
+    })
+
+    it.each(['blur', 'click', 'mouseLeave', 'disabled', 'unmount'] as const)(
+      'cancels a pending focus bubble on %s', (cancel) => {
+        const view = render(<Tooltip label="Refresh" focusDelayMs={500}><button>anchor</button></Tooltip>)
+        const anchor = screen.getByText('anchor')
+        const initialTimers = vi.getTimerCount()
+        fireEvent.focus(anchor)
+        expect(vi.getTimerCount()).toBe(initialTimers + 1)
+        act(() => { vi.advanceTimersByTime(499) })
+        if (cancel === 'disabled') {
+          view.rerender(<Tooltip label="Refresh" focusDelayMs={500} disabled><button>anchor</button></Tooltip>)
+        } else if (cancel === 'unmount') {
+          view.unmount()
+        } else {
+          fireEvent[cancel](anchor)
+        }
+        expect(vi.getTimerCount()).toBe(initialTimers)
+        act(() => { vi.advanceTimersByTime(500) })
+        expect(screen.queryByRole('tooltip')).toBeNull()
+        if (cancel === 'disabled') {
+          view.rerender(<Tooltip label="Refresh" focusDelayMs={500}><button>anchor</button></Tooltip>)
+          expect(screen.queryByRole('tooltip')).toBeNull()
+        }
+      },
+    )
+
+    it('keeps default focus immediate and cancels a pending hover delay', () => {
+      render(<Tooltip label="Refresh" delayMs={500}><button>anchor</button></Tooltip>)
+      const anchor = screen.getByText('anchor')
+      const initialTimers = vi.getTimerCount()
+      fireEvent.mouseEnter(anchor)
+      act(() => { vi.advanceTimersByTime(499) })
+      expect(screen.queryByRole('tooltip')).toBeNull()
+      fireEvent.focus(anchor)
+      expect(screen.getByRole('tooltip').textContent).toBe('Refresh')
+      expect(vi.getTimerCount()).toBe(initialTimers)
+    })
+
+    it('does not schedule pointer-driven focus and resumes delay after a key press', () => {
+      render(<Tooltip label="Refresh" focusDelayMs={500}><button>anchor</button></Tooltip>)
+      const anchor = screen.getByText('anchor')
+      const initialTimers = vi.getTimerCount()
+      fireEvent.pointerDown(document.body)
+      fireEvent.focus(anchor)
+      expect(vi.getTimerCount()).toBe(initialTimers)
+      act(() => { vi.advanceTimersByTime(500) })
+      expect(screen.queryByRole('tooltip')).toBeNull()
+      fireEvent.blur(anchor)
+      fireEvent.keyDown(document.body, { key: 'Tab' })
+      fireEvent.focus(anchor)
+      act(() => { vi.advanceTimersByTime(499) })
+      expect(screen.queryByRole('tooltip')).toBeNull()
+      act(() => { vi.advanceTimersByTime(1) })
+      expect(screen.getByRole('tooltip').textContent).toBe('Refresh')
+    })
   })
 
   it('shows the bubble to the right on hover and hides it on leave', () => {
