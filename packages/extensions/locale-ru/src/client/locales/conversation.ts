@@ -371,4 +371,10 @@ export const ru = {
   'shortcut.newline': 'Новая строка',
   'shortcut.slash': 'Открыть меню команд',
   'tool.title.updateSchedule': 'Обновить напоминание',
+  'ask.closed': 'closed',
+  'ask.closedDetail': 'This question is closed; its outcome is in the conversation below.',
+  'ask.pending': 'continued; answer still available',
+  'ask.pendingDetail': 'These pending questions remain answerable from the composer.',
+  'ask.reopen': 'Answer',
+  'ask.review': 'View answers',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>

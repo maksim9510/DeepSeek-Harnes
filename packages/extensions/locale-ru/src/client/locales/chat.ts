@@ -142,9 +142,6 @@ export const ru = {
   'message.turnUsage.output': 'Вывод',
   'message.turnUsage.reasoning': ' (в том числе размышления: {tokens})',
   'message.turnUsage.count': '{count} tok',
-  'duration.seconds': '{seconds}с',
-  'duration.minutes': '{minutes}мин {seconds}с',
-  'duration.hours': '{hours}ч {minutes}мин {seconds}с',
   'command.running': 'Выполняется…',
   'command.failed': 'Не удалось выполнить команду',
   'command.done': 'Завершено',
@@ -191,4 +188,7 @@ export const ru = {
   'message.toolsRemoved': 'Удалены: {names}',
   'message.toolsRemovedCount': 'Удалено: {count}',
   'message.toolsUpdated': 'Инструменты обновлены',
+  'duration.hourUnit': 'h ',
+  'duration.minuteUnit': 'm ',
+  'duration.secondUnit': 's',
 } satisfies Record<LocaleNamespaceMap['chat'], string>

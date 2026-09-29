@@ -46,6 +46,4 @@ export const ru = {
   switchRefused: 'Не удалось переключиться на {name}: {reason}',
   close: 'Закрыть',
   creatorDraft: 'Помоги мне создать пресет',
-  enableDevToolsToCreate: 'Включите инструменты кодирования в общих настройках, чтобы запустить режим Creator',
-  enableDevToolsToSetDefault: 'Включите инструменты кодирования в общих настройках, чтобы выбрать значение по умолчанию',
 } satisfies Record<LocaleNamespaceMap['settings.agentPreset'], string>

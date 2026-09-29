@@ -8,8 +8,6 @@ export const ru = {
   'command.label': 'Модель',
   'command.description': 'Выбрать модель для этой сессии',
   'option.loadError': 'Не удалось загрузить каталог: {message}',
-  'option.deepseekV4Flash.description': 'Быстрая, эффективная и экономичная; подходит для сфокусированных, типовых и параллельных задач.',
-  'option.deepseekV4Pro.description': 'Сильнее в агентном программировании, знаниях и сложных рассуждениях; подходит для комплексных или критичных к качеству задач при большей стоимости.',
   'trigger.fallback': 'Выбрать модель',
   'trigger.loading': 'Загрузка моделей…',
   'trigger.selectAria': 'Выбрать модель',
@@ -27,4 +25,7 @@ export const ru = {
   'empty.efforts': 'У этой модели нет уровней рассуждений.',
   'error.sessionInUse': 'This session is already in use, possibly by another running DSH instance (such as dsh web or the desktop app). Quit other running DSH instances and try again.',
   'provider.account': 'Аккаунт DeepSeek',
+  'search.clear': 'Clear search',
+  'search.empty': 'No matching models.',
+  'search.placeholder': 'Search models…',
 } satisfies Record<LocaleNamespaceMap['model'], string>
