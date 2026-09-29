@@ -244,12 +244,12 @@ importers:
       '@deepseek-ai/dsh-experimental-agent-team-profile':
         specifier: workspace:*
         version: link:../../packages/experimental/agent-team-profile
-      '@deepseek-ai/dsh-experimental-browser-use-profile':
-        specifier: workspace:*
-        version: link:../../packages/experimental/browser-use-profile
       '@deepseek-ai/dsh-experimental-auto-review':
         specifier: workspace:*
         version: link:../../packages/experimental/auto-review
+      '@deepseek-ai/dsh-experimental-browser-use-profile':
+        specifier: workspace:*
+        version: link:../../packages/experimental/browser-use-profile
       '@deepseek-ai/dsh-experimental-schedule-bundle':
         specifier: workspace:*
         version: link:../../packages/experimental/schedule-bundle
@@ -8378,6 +8378,12 @@ importers:
       '@deepseek-ai/dsh-client-ui-settings-plugins':
         specifier: workspace:^
         version: link:../../client/ui-settings-plugins
+      '@deepseek-ai/dsh-client-ui-settings-session-log':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-session-log
+      '@deepseek-ai/dsh-client-ui-shortcuts':
+        specifier: workspace:^
+        version: link:../../client/ui-shortcuts
       '@deepseek-ai/dsh-client-ui-sidebar':
         specifier: workspace:^
         version: link:../../client/ui-sidebar

@@ -32,6 +32,7 @@ import { ru as settingsModels } from './settings-models.ts'
 import { ru as settingsPermission } from './settings-permission.ts'
 import { ru as settingsPluginInventory } from './settings-plugin-inventory.ts'
 import { ru as settingsPlugins } from './settings-plugins.ts'
+import { ru as settingsSessionLog } from './settings-session-log.ts'
 import { ru as settingsTheme } from './settings-theme.ts'
 import { ru as sidebar } from './sidebar.ts'
 import { ru as sidebarBrowser } from './sidebar-browser.ts'
@@ -43,6 +44,7 @@ import { ru as sidebarPdf } from './sidebar-pdf.ts'
 import { ru as sidebarRight } from './sidebar-right.ts'
 import { ru as sidebarTerminal } from './sidebar-terminal.ts'
 import { ru as skill } from './skill.ts'
+import { ru as shortcuts } from './shortcuts.ts'
 import { ru as slashMenu } from './slash-menu.ts'
 import { ru as subagent } from './subagent.ts'
 import { ru as trajectory } from './trajectory.ts'
@@ -63,6 +65,7 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'settings.pluginInventory': settingsPluginInventory,
   'settings.agentPreset': settingsAgentPreset,
   'settings.permission': settingsPermission,
+  'settings.sessionLog': settingsSessionLog,
   'permission.access': permissionAccess,
   'trajectory': trajectory,
   'conversation': conversation,
@@ -81,6 +84,7 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'slash.menu': slashMenu,
   'command': command,
   'skill': skill,
+  'shortcuts': shortcuts,
   'plan': plan,
   'approval': approval,
   'deliverables': deliverables,
