@@ -95,7 +95,7 @@ pnpm dsh web
 
 - Отзывы и сообщения об ошибках — через [GitHub Discussions](https://github.com/deepseek-ai/deepseek-harness/discussions) апстрима.
 - Добавьте тему [`dsh-plugin`](https://github.com/topics/dsh-plugin) в репозиторий своего плагина — так его легче найти.
-- Присоединяйтесь к <a href="https://discord.gg/Ycq5dCaS4">Discord-сообществу DeepSeek Harness</a>.
+- Присоединяйтесь к <a href="https://discord.gg/4MrtZUhpxg">Discord-сообществу DeepSeek Harness</a>.
 
 ## Участие в разработке
 
