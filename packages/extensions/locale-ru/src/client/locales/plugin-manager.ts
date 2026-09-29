@@ -191,4 +191,8 @@ export const ru = {
   installTryAnotherWay: 'Попробовать другим способом',
   refreshError: 'Обновление не удалось. Попробуйте ещё раз.',
   registryOfficial: 'Официальный реестр npm',
+  infoDescription: 'Configure official plugins and install or manage other plugins here. View the built-in plugin list and runtime status in Settings → Built-in plugins.',
+  infoLabel: 'About plugins',
+  installGitTemplateHint: 'Replace this with the actual Git repository address.',
+  installPathTemplateHint: 'Replace this with the actual path to your local plugin directory.',
 } satisfies Record<LocaleNamespaceMap['pluginManager'], string>
