@@ -8,7 +8,7 @@
 
 `install` 命令检查环境，搭建 pnpm 工具链——在缺失时通过 npm 安装 Corepack，通过 `corepack prepare` 下载并激活固定的 `pnpm@11.7.0`，创建或重定向裸 `pnpm` shim——然后安装缺失的系统依赖，将仓库克隆到 `~/.dsh/source`，运行 `pnpm install` 和 `pnpm run build`，为你的 API 密钥创建空的 `.env` 文件，并打印启动 Web UI 的命令。
 
-它还会部署分支的[网络搜索垫片](../../../tools/dsh-search-shim/README.zh.md)：两个模块从检出复制到 `~/.dsh/search-shim`，写入并启用启动它们的 systemd 用户单元，安装器在报告成功前会等待健康端点就绪。此后网络搜索无需额外设置即可使用；没有 systemd 用户管理器的机器会得到文件以及直接运行垫片的命令。
+它还会部署分支的[网络搜索垫片](../../../tools/dsh-search-shim/README.zh.md)：两个模块从检出复制到 `~/.dsh/search-shim`，写入并启用启动它们的 systemd 用户单元，安装器在报告成功前会等待健康端点就绪。它还会把 `DEEPSEEK_SEARCH_BASE_URL=http://127.0.0.1:24881/v1` 写入检出目录的 `.env`，`web-search-deepseek` 提供方正是通过它找到垫片，因此此后网络搜索无需额外设置即可使用；没有 systemd 用户管理器的机器会得到文件以及直接运行垫片的命令。
 
 ```sh
 python3 DeepSeek-install.py install

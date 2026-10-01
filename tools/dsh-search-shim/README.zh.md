@@ -39,16 +39,9 @@
 python3 DeepSeek-install.py install
 ```
 
-它把两个模块复制到 `~/.dsh/search-shim`，写入一个 systemd 用户单元（其 `ExecStart` 指向解析出的 `node` 绝对路径），启用并重启它，并等待 `/health` 就绪。`doctor` 报告同样的状态，当垫片缺失或单元停止时，`doctor --fix` 会从检出的代码重新部署。
+它把两个模块复制到 `~/.dsh/search-shim`，写入一个 systemd 用户单元（其 `ExecStart` 指向解析出的 `node` 绝对路径），启用并重启它，并等待 `/health` 就绪。它还会把 `DEEPSEEK_SEARCH_BASE_URL=http://127.0.0.1:24881/v1` 写入检出目录的 `.env`：当 `web-search-deepseek` 提供方没有 `baseURL` 配置时，正是通过该变量找到垫片，因此安装完成后无需额外的设置步骤即可搜索。`doctor` 报告部署、单元运行与端点三者状态，`doctor --fix` 会重新部署或补写缺失的那一项。
 
-让 Harness 指向垫片：
-
-```yaml
-web-search-deepseek:
-  baseURL: http://127.0.0.1:24881/v1
-```
-
-端口固定为 `24881`。若没有 systemd 用户管理器，安装器会部署文件并打印直接运行垫片的命令；无论哪种方式，`doctor` 都会把正在运行的垫片报告为健康。
+端口固定为 `24881`。若没有 systemd 用户管理器，安装器会部署文件并打印直接运行垫片的命令；无论哪种方式，`doctor` 都会把正在运行的垫片报告为健康。若部署方在别处管理端点——`web-search-deepseek` 设置命名空间、配置文件补丁中的 `baseURL`，或自行设置的 `DEEPSEEK_SEARCH_BASE_URL`——安装器会保留它，只在没有任何配置指向垫片时才追加该行。
 
 ## 文件
 
