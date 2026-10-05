@@ -24,7 +24,9 @@ import { ru as pluginManager } from './plugin-manager.ts'
 import { ru as question } from './question.ts'
 import { ru as reference } from './reference.ts'
 import { ru as scheduleCatalog } from './schedule-catalog.ts'
+import { ru as scheduleManager } from './schedule-manager.ts'
 import { ru as sessionLogDownload } from './session-log-download.ts'
+import { ru as settingsAgentLoop } from './settings-agent-loop.ts'
 import { ru as settingsAgentPreset } from './settings-agent-preset.ts'
 import { ru as settingsGeneral } from './settings-general.ts'
 import { ru as settingsLocale } from './settings-locale.ts'
@@ -33,7 +35,10 @@ import { ru as settingsPermission } from './settings-permission.ts'
 import { ru as settingsPluginInventory } from './settings-plugin-inventory.ts'
 import { ru as settingsPlugins } from './settings-plugins.ts'
 import { ru as settingsSessionLog } from './settings-session-log.ts'
+import { ru as settingsShell } from './settings-shell.ts'
+import { ru as settingsSubagent } from './settings-subagent.ts'
 import { ru as settingsTheme } from './settings-theme.ts'
+import { ru as settingsWebSearch } from './settings-web-search.ts'
 import { ru as sidebar } from './sidebar.ts'
 import { ru as sidebarBrowser } from './sidebar-browser.ts'
 import { ru as sidebarCode } from './sidebar-code.ts'
@@ -64,6 +69,10 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'settings.plugins': settingsPlugins,
   'settings.pluginInventory': settingsPluginInventory,
   'settings.agentPreset': settingsAgentPreset,
+  'settings.agentLoop': settingsAgentLoop,
+  'settings.shell': settingsShell,
+  'settings.subagent': settingsSubagent,
+  'settings.webSearch': settingsWebSearch,
   'settings.permission': settingsPermission,
   'settings.sessionLog': settingsSessionLog,
   'permission.access': permissionAccess,
@@ -74,6 +83,7 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'cordis': cordis,
   'subagent': subagent,
   'schedule.catalog': scheduleCatalog,
+  'schedule.manager': scheduleManager,
   'workflowRun': workflowRun,
   'model': model,
   'question': question,

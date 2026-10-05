@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "浏览器操作",
+    "description": "通过 dsh-web-app 为模型提供浏览器工具的实验性配置文件包"
+  }
+}

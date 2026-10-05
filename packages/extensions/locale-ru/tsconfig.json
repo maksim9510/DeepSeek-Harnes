@@ -72,6 +72,9 @@
       "path": "../../client/ui-schedule"
     },
     {
+      "path": "../../client/ui-settings-agent-loop"
+    },
+    {
       "path": "../../client/ui-settings-general/tsconfig.client.json"
     },
     {
@@ -82,6 +85,15 @@
     },
     {
       "path": "../../client/ui-settings-plugins"
+    },
+    {
+      "path": "../../client/ui-settings-shell"
+    },
+    {
+      "path": "../../client/ui-settings-subagent"
+    },
+    {
+      "path": "../../client/ui-settings-web-search"
     },
     {
       "path": "../../client/ui-sidebar"
