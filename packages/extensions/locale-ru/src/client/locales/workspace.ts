@@ -117,4 +117,6 @@ export const ru = {
   'shortcut.noPicker': 'Выборщик каталогов недоступен',
   'shortcut.noSession': 'Сначала выберите сессию',
   'viewOptions.hideArchived': 'Скрыть архивные',
+  'draft.initializationFailed': 'Could not fill the draft. Please try again shortly.',
+  'draft.workspaceRequired': 'Choose a workspace first.',
 } satisfies Record<LocaleNamespaceMap['workspace'], string>

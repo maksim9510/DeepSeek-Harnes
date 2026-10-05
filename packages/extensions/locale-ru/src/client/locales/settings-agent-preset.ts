@@ -46,4 +46,10 @@ export const ru = {
   switchRefused: 'Не удалось переключиться на {name}: {reason}',
   close: 'Закрыть',
   creatorDraft: 'Помоги мне создать пресет',
+  createPlugin: 'Let the agent create a plugin',
+  createPluginChecking: 'Checking whether Creator mode is available',
+  createPluginDescription: 'Enter Creator mode and make your own DSH plugin',
+  createPluginMissing: 'Creator mode is not included in this configuration',
+  createPluginUnavailable: 'Temporarily unavailable. Reopen this menu to retry',
+  standardUnavailable: 'Standard mode is unavailable. Restore it or choose another available mode.',
 } satisfies Record<LocaleNamespaceMap['settings.agentPreset'], string>

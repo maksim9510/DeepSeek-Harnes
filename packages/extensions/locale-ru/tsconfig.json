@@ -130,9 +130,6 @@
     },
     {
       "path": "../../experimental/client-ui-agent-team"
-    },
-    {
-      "path": "../../runtime-diagnostics/invariants"
     }
   ]
 }

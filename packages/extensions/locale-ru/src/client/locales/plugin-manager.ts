@@ -194,4 +194,12 @@ export const ru = {
   reasonIncompatibleInstall: 'Install a plugin version compatible with this DSH.',
   reasonIncompatibleInstalled: 'Uninstall it and install a version compatible with this DSH.',
   sentenceSeparator: ' ',
+  chooseAddMethod: 'Choose how to add a plugin',
+  installDoneOtherVersion: 'Under pnpm\'s supply-chain security policy (minimumReleaseAge), versions published more recently than the required age are not installed automatically, so this installation used {installed} instead of the latest version {version}. A newly published version has not completed this waiting period and may contain undetected malicious code or defects. If you need {version}, uninstall the current version and then install {exact} to request that version.',
+  installExisting: 'Install a third-party plugin',
+  installExistingDescription: 'Supports npm packages, Git repositories, and local directories',
+  sourceBuiltIn: 'Built in',
+  sourceSpec: 'Code source',
+  sourceTitle: 'Source',
+  sourceVersion: 'Current version',
 } satisfies Record<LocaleNamespaceMap['pluginManager'], string>
