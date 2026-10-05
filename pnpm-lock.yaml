@@ -8671,6 +8671,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-schedule':
         specifier: workspace:^
         version: link:../../client/ui-schedule
+      '@deepseek-ai/dsh-client-ui-settings-agent-loop':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-agent-loop
       '@deepseek-ai/dsh-client-ui-settings-general':
         specifier: workspace:^
         version: link:../../client/ui-settings-general
@@ -8686,6 +8689,15 @@ importers:
       '@deepseek-ai/dsh-client-ui-settings-session-log':
         specifier: workspace:^
         version: link:../../client/ui-settings-session-log
+      '@deepseek-ai/dsh-client-ui-settings-shell':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-shell
+      '@deepseek-ai/dsh-client-ui-settings-subagent':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-subagent
+      '@deepseek-ai/dsh-client-ui-settings-web-search':
+        specifier: workspace:^
+        version: link:../../client/ui-settings-web-search
       '@deepseek-ai/dsh-client-ui-shortcuts':
         specifier: workspace:^
         version: link:../../client/ui-shortcuts
