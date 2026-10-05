@@ -8,7 +8,7 @@ English | [中文](install.zh.md)
 
 The `install` command checks the environment, bootstraps the pnpm toolchain — installs Corepack through npm when it is missing, downloads and activates the pinned `pnpm@11.7.0` through `corepack prepare`, and creates or repoints the bare `pnpm` shim — then installs missing system dependencies, clones the repository into `~/.dsh/source`, runs `pnpm install` and `pnpm run build`, creates an empty `.env` file for your API key, and prints the command that starts the Web UI.
 
-It also deploys the fork's [web search shim](../../../tools/dsh-search-shim/README.md): the two modules are copied from the checkout into `~/.dsh/search-shim`, a systemd user unit that starts them is written and enabled, and the installer waits for the health endpoint before reporting success. Web search works after this step without further setup; a machine without a systemd user manager gets the files and the command to run the shim directly.
+It also deploys the fork's [web search shim](../../../tools/dsh-search-shim/README.md): the two modules are copied from the checkout into `~/.dsh/search-shim`, a systemd user unit that starts them is written and enabled, and the installer waits for the health endpoint before reporting success. It writes `DEEPSEEK_SEARCH_BASE_URL=http://127.0.0.1:24881/v1` into the checkout `.env` as well, which is how the `web-search-deepseek` provider reaches the shim, so web search works after this step without further setup; a machine without a systemd user manager gets the files and the command to run the shim directly.
 
 ```sh
 python3 DeepSeek-install.py install

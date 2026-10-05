@@ -108,6 +108,14 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("tools/dsh-search-shim/server.mjs", "web_search_20250305"),
     ("tools/dsh-search-shim/provider-route.mjs", "resolveActiveRoute"),
     ("DeepSeek-install.py", "SHIM_SOURCE_DIR"),
+    # A deployed shim only answers when the provider targets it: the installer
+    # writes the endpoint into the checkout `.env` and doctor repairs it, so a
+    # merge that drops the wiring returns search to the upstream DeepSeek
+    # endpoint, where the fork's credentials fail.  The endpoint and its port
+    # stay documented in the shim README and linked from the root README.
+    ("DeepSeek-install.py", "DEEPSEEK_SEARCH_BASE_URL"),
+    ("README.md", "tools/dsh-search-shim"),
+    ("tools/dsh-search-shim/README.md", "24881"),
     # Browser-tool provisioning is fork-only too: a merge that dropped it
     # would leave the agent without a browser.  The marker is the constant the
     # two provisioning steps and their doctor checks share.

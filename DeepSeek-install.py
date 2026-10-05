@@ -78,6 +78,11 @@ SHIM_DIR = ".dsh/search-shim"
 SHIM_MODULES = ("server.mjs", "provider-route.mjs")
 SHIM_UNIT_NAME = "dsh-search-shim.service"
 SHIM_PORT = 24881
+#: Environment variable the `web-search-deepseek` provider falls back to when
+#: its `baseURL` config is absent.  The installer points it at the shim so a
+#: fresh deployment searches without a separate settings step; the provider
+#: appends `/messages` to the value.
+SHIM_SEARCH_BASE_URL_ENV = "DEEPSEEK_SEARCH_BASE_URL"
 #: The shim uses global `fetch`, so it needs Node.js 18 even though the
 #: repository itself has a higher floor.
 SHIM_NODE_MIN = (18, 0, 0)
@@ -804,11 +809,12 @@ class Doctor:
         )
 
     def check_search_shim(self) -> CheckResult:
-        """Report whether the fork's web search shim is deployed and running.
+        """Report whether the fork's web search shim is deployed, running, and targeted.
 
         The shim answers the `web-search-deepseek` provider, so a checkout
-        that carries it but never deployed it leaves the Web UI without web
-        search.  A checkout without the shim at all is not a defect.
+        that carries it but never deployed it, or that left the provider on its
+        upstream endpoint, leaves the Web UI without web search.  A checkout
+        without the shim at all is not a defect.
         """
         source = self.source_dir / SHIM_SOURCE_DIR
         if not source.is_dir():
@@ -820,6 +826,14 @@ class Doctor:
                 "search-shim",
                 False,
                 detail=f"the shim is not deployed ({', '.join(absent)} missing from {target_dir})",
+                fix="python3 DeepSeek-install.py doctor --fix",
+                probe=self.check_search_shim,
+            )
+        if not _search_endpoint_wired(self.source_dir):
+            return CheckResult(
+                "search-shim",
+                False,
+                detail=f"web search does not target the shim ({_shim_endpoint_base()})",
                 fix="python3 DeepSeek-install.py doctor --fix",
                 probe=self.check_search_shim,
             )
@@ -1436,6 +1450,74 @@ def _create_env_file(source_dir: Path) -> None:
     env_file.write_text("# DeepSeek Harness environment\n# Add your API key below to use the assistant.\nDEEPSEEK_API_KEY=\n", encoding="utf-8")
 
 
+def _dotenv_value(env_file: Path, name: str) -> Optional[str]:
+    """Value assigned to ``name`` in one ``.env``, or None when it is absent or empty."""
+    try:
+        text = env_file.read_text(encoding="utf-8")
+    except OSError:
+        return None
+    prefix = f"{name}="
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith(prefix):
+            value = stripped[len(prefix):].strip()
+            return value if value != "" else None
+    return None
+
+
+def _shim_endpoint_base() -> str:
+    """Anthropic-compatible base URL that reaches the deployed shim."""
+    return f"http://127.0.0.1:{SHIM_PORT}/v1"
+
+
+def _search_endpoint_wired(source_dir: Path) -> bool:
+    """Whether web search already targets the shim.
+
+    The provider reads its ``baseURL`` config first and falls back to
+    ``DEEPSEEK_SEARCH_BASE_URL``, so the checkout ``.env`` and the web
+    profile's patch layer both count as wired.
+    """
+    wanted = _shim_endpoint_base()
+    if _dotenv_value(source_dir / ENV_FILE, SHIM_SEARCH_BASE_URL_ENV) == wanted:
+        return True
+    try:
+        patch = (_profile_dir() / "cordis.patch.yml").read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return wanted in patch
+
+
+def _ensure_search_endpoint(source_dir: Path) -> None:
+    """Point ``web-search-deepseek`` at the shim through the checkout ``.env``.
+
+    Without this line the provider keeps its upstream DeepSeek endpoint, where
+    the fork's credentials fail and every search returns nothing.  A deployment
+    that already targets the shim elsewhere keeps its configuration, and an
+    explicit different value is reported instead of overwritten.
+    """
+    wanted = _shim_endpoint_base()
+    if _search_endpoint_wired(source_dir):
+        log_ok(f"Web search targets the shim ({wanted})")
+        return
+    env_file = source_dir / ENV_FILE
+    current = _dotenv_value(env_file, SHIM_SEARCH_BASE_URL_ENV)
+    if current is not None:
+        log_warn(f"{SHIM_SEARCH_BASE_URL_ENV}={current} does not target the shim; keeping the explicit value")
+        return
+    try:
+        existing = env_file.read_text(encoding="utf-8") if path_exists(env_file) else ""
+    except OSError as exc:
+        log_warn(f"Cannot read {env_file}: {exc}")
+        return
+    separator = "" if existing == "" or existing.endswith("\n") else "\n"
+    try:
+        env_file.write_text(f"{existing}{separator}{SHIM_SEARCH_BASE_URL_ENV}={wanted}\n", encoding="utf-8")
+    except OSError as exc:
+        log_warn(f"Cannot write {env_file}: {exc}")
+        return
+    log_ok(f"Web search wired to the shim in {env_file}")
+
+
 def _shim_target_dir() -> Path:
     """Deployment directory for the shim inside the Harness home."""
     return Path.home() / SHIM_DIR
@@ -1540,6 +1622,7 @@ def _deploy_shim(source_dir: Path) -> None:
     for name in SHIM_MODULES:
         shutil.copyfile(source / name, target_dir / name)
     log_ok(f"Search shim deployed to {target_dir}")
+    _ensure_search_endpoint(source_dir)
 
     if not _systemd_user_available():
         log_warn("No systemd user manager; the shim is deployed but not started.")

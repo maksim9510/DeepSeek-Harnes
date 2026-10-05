@@ -1,6 +1,19 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for 2026-09-21-deployed-web-search-shim.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-09-21-deployed-web-search-shim.md
-2026-09-21-deployed-web-search-shim.md: 7381bf86531eb26112841175e4c4b91c24e689b7
-2026-09-21-deployed-web-search-shim.zh.md: 25ed119119b3103587cf6fd0876ffef9e0074589
+/agent-note-a-deployed-web-search-shim-outside-the-package-tree:
+  en: 979c9aeaab5d37d7
+  zh: 0d98e6cc5b3ae4e8
+/agent-note-a-deployed-web-search-shim-outside-the-package-tree/problem:
+  en: a64fe12deadf4aca
+  zh: 76ea845d7e47948b
+/agent-note-a-deployed-web-search-shim-outside-the-package-tree/decision:
+  en: 254a406102dd7242
+  zh: 041ba5320deb801b
+/agent-note-a-deployed-web-search-shim-outside-the-package-tree/alternatives-considered:
+  en: ab6c2cbd39548d82
+  zh: e1ddb4288c8fef61
+/agent-note-a-deployed-web-search-shim-outside-the-package-tree/consequences:
+  en: 6e782d238ce52559
+  zh: 2abbf3c536da79f3

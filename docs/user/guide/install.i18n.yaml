@@ -1,6 +1,25 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for install.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write docs/user/guide/install.md
-install.md: a6abeb6e78d22f978272f356a790d527727ca5b9
-install.zh.md: 050a16cb3b48b69442e265d5dce054cf72c3b566
+/install-deepseek-harness-with-the-installer-script:
+  en: bcf2c73d4c1db11c
+  zh: f0eff2d96882f8ee
+/install-deepseek-harness-with-the-installer-script/what-the-installer-does:
+  en: 62dda3355d206e07
+  zh: 2f88142d9cf5db7b
+/install-deepseek-harness-with-the-installer-script/the-doctor:
+  en: 34e960117a7eac6b
+  zh: dc788eeafb9ecebf
+/install-deepseek-harness-with-the-installer-script/the-doctor/astra-linux-and-the-old-npm:
+  en: 2343bee18c3305cc
+  zh: 265e6f23bc88b6a0
+/install-deepseek-harness-with-the-installer-script/options:
+  en: 64395f56625a3550
+  zh: ac79b9e26d45287e
+/install-deepseek-harness-with-the-installer-script/what-the-installer-repairs-automatically:
+  en: 87903b58054fbde5
+  zh: a12ad9c668511824
+/install-deepseek-harness-with-the-installer-script/synchronize-with-upstream:
+  en: dbf1b946ce53f0f7
+  zh: 02885e8fcd920b4d

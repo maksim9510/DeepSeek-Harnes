@@ -39,16 +39,9 @@ The [installer](../../DeepSeek-install.py) owns the deployment — there is no s
 python3 DeepSeek-install.py install
 ```
 
-It copies the two modules into `~/.dsh/search-shim`, writes a systemd user unit whose `ExecStart` names the resolved absolute `node` binary, enables and restarts it, and waits for `/health`. `doctor` reports the same state and `doctor --fix` redeploys the shim from the checkout when it is missing or the unit stopped.
+It copies the two modules into `~/.dsh/search-shim`, writes a systemd user unit whose `ExecStart` names the resolved absolute `node` binary, enables and restarts it, and waits for `/health`. It also writes `DEEPSEEK_SEARCH_BASE_URL=http://127.0.0.1:24881/v1` into the checkout `.env`, which is how the `web-search-deepseek` provider reaches the shim when its `baseURL` config is absent, so an installation searches without a separate settings step. `doctor` reports the deployment, the running unit, and the endpoint, and `doctor --fix` redeploys or rewires whichever is missing.
 
-Point the Harness at the shim:
-
-```yaml
-web-search-deepseek:
-  baseURL: http://127.0.0.1:24881/v1
-```
-
-The port is fixed at `24881`. Without a systemd user manager the installer deploys the files, prints the command to run the shim directly, and `doctor` reports a running shim as healthy either way.
+The port is fixed at `24881`. Without a systemd user manager the installer deploys the files, prints the command to run the shim directly, and `doctor` reports a running shim as healthy either way. A deployment that manages the endpoint elsewhere — the `web-search-deepseek` settings namespace, a `baseURL` in a profile patch, or its own `DEEPSEEK_SEARCH_BASE_URL` value — keeps it: the installer adds the line only when nothing points search at the shim.
 
 ## Files
 
