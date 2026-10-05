@@ -42,7 +42,6 @@
     "@deepseek-ai/dsh-experimental-agent-team-profile": "workspace:*",
     "@deepseek-ai/dsh-experimental-browser-use-profile": "workspace:*",
     "@deepseek-ai/dsh-experimental-inspector-profile": "workspace:*",
-    "@deepseek-ai/dsh-experimental-schedule-bundle": "workspace:*",
     "@deepseek-ai/dsh-fs-local": "workspace:*",
     "@deepseek-ai/dsh-goal": "workspace:*",
     "@deepseek-ai/dsh-goal-round-driver": "workspace:*",
