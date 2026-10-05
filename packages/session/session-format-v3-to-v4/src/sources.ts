@@ -51,7 +51,7 @@ const RELEASED_SAME_NAME_PRODUCERS: ReadonlySet<string> = new Set([
   'subagent-settled', 'webhook', 'agent-message', 'model-selection',
   'plan-mode', 'time-context', 'tmux-context', 'user-approval',
   'repeat-tool-reminder', 'tool-cordis', 'cordis-host-runner', 'tool-goal',
-  'tool-jobs', 'hooks-codex', 'hooks-claude-code', 'schedule',
+  'tool-jobs', 'hooks-codex', 'schedule',
   'dsh-session-title-llm',
 ])
 

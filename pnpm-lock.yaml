@@ -274,9 +274,6 @@ importers:
       '@deepseek-ai/dsh-home-paths':
         specifier: workspace:*
         version: link:../../packages/util/home-paths
-      '@deepseek-ai/dsh-hooks-claude-code':
-        specifier: workspace:*
-        version: link:../../packages/hooks/hooks-claude-code
       '@deepseek-ai/dsh-hooks-codex':
         specifier: workspace:*
         version: link:../../packages/hooks/hooks-codex
@@ -9091,55 +9088,6 @@ importers:
         specifier: workspace:*
         version: link:../../shell/shell
 
-  packages/hooks/hooks-claude-code:
-    dependencies:
-      '@deepseek-ai/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@deepseek-ai/dsh-agent':
-        specifier: workspace:*
-        version: link:../../core/agent
-      '@deepseek-ai/dsh-agent-loop':
-        specifier: workspace:*
-        version: link:../../core/agent-loop
-      '@deepseek-ai/dsh-agent-loop-testkit':
-        specifier: workspace:*
-        version: link:../../test-support/agent-loop-testkit
-      '@deepseek-ai/dsh-bash-local':
-        specifier: workspace:*
-        version: link:../../shell/bash-local
-      '@deepseek-ai/dsh-hook-protocol':
-        specifier: workspace:*
-        version: link:../hook-protocol
-      '@deepseek-ai/dsh-llm':
-        specifier: workspace:*
-        version: link:../../llm/llm
-      '@deepseek-ai/dsh-session':
-        specifier: workspace:*
-        version: link:../../core/session
-      '@deepseek-ai/dsh-session-persistence-jsonl':
-        specifier: workspace:*
-        version: link:../../session/session-persistence-jsonl
-      '@deepseek-ai/dsh-session-projection':
-        specifier: workspace:*
-        version: link:../../session/session-projection
-      '@deepseek-ai/dsh-shell':
-        specifier: workspace:*
-        version: link:../../shell/shell
-      '@deepseek-ai/dsh-subagent':
-        specifier: workspace:*
-        version: link:../../subagent/subagent
-      '@deepseek-ai/dsh-subprocess-local':
-        specifier: workspace:*
-        version: link:../../subprocess/subprocess-local
-      '@deepseek-ai/dsh-tools':
-        specifier: workspace:*
-        version: link:../../core/tools
-
   packages/hooks/hooks-codex:
     dependencies:
       '@deepseek-ai/schemastery':
@@ -9868,7 +9816,7 @@ importers:
         version: link:../../../vendor/schemastery
       '@earendil-works/pi-ai':
         specifier: ^0.87.1
-        version: 0.87.1(patch_hash=b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f)(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)
+        version: 0.87.1(patch_hash=b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f)(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(supports-color@9.4.0)(ws@8.21.0)(zod@4.4.3)
     devDependencies:
       '@deepseek-ai/cordis':
         specifier: workspace:~
@@ -12538,79 +12486,6 @@ importers:
         specifier: workspace:*
         version: link:../tool-subagent
 
-  packages/subagent/subagent-claude-code:
-    dependencies:
-      '@anthropic-ai/claude-agent-sdk':
-        specifier: 0.3.263
-        version: 0.3.263(@anthropic-ai/sdk@0.93.0(zod@4.4.3))(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(zod@4.4.3)
-      '@anthropic-ai/sdk':
-        specifier: 0.93.0
-        version: 0.93.0(zod@4.4.3)
-      '@deepseek-ai/dsh-brand':
-        specifier: workspace:*
-        version: link:../../util/brand
-      '@deepseek-ai/schemastery':
-        specifier: link:../../../vendor/schemastery
-        version: link:../../../vendor/schemastery
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.29.0
-        version: 1.29.0(zod@4.4.3)
-      zod:
-        specifier: ^4.4.3
-        version: 4.4.3
-    devDependencies:
-      '@deepseek-ai/cordis':
-        specifier: workspace:~
-        version: link:../../../vendor/cordis
-      '@deepseek-ai/dsh-agent':
-        specifier: workspace:*
-        version: link:../../core/agent
-      '@deepseek-ai/dsh-app-boot':
-        specifier: workspace:*
-        version: link:../../boot/app-boot
-      '@deepseek-ai/dsh-llm':
-        specifier: workspace:*
-        version: link:../../llm/llm
-      '@deepseek-ai/dsh-loader-smoke':
-        specifier: workspace:*
-        version: link:../../test-support/loader-smoke
-      '@deepseek-ai/dsh-session':
-        specifier: workspace:*
-        version: link:../../core/session
-      '@deepseek-ai/dsh-session-checkpoint-policy':
-        specifier: workspace:*
-        version: link:../../session/session-checkpoint-policy
-      '@deepseek-ai/dsh-session-persistence-jsonl':
-        specifier: workspace:*
-        version: link:../../session/session-persistence-jsonl
-      '@deepseek-ai/dsh-session-projection':
-        specifier: workspace:*
-        version: link:../../session/session-projection
-      '@deepseek-ai/dsh-subagent':
-        specifier: workspace:*
-        version: link:../subagent
-      '@deepseek-ai/dsh-subagent-codex':
-        specifier: workspace:*
-        version: link:../subagent-codex
-      '@deepseek-ai/dsh-subprocess':
-        specifier: workspace:*
-        version: link:../../subprocess/subprocess
-      '@deepseek-ai/dsh-subprocess-local':
-        specifier: workspace:*
-        version: link:../../subprocess/subprocess-local
-      '@deepseek-ai/dsh-timeout':
-        specifier: workspace:*
-        version: link:../../util/timeout
-      '@deepseek-ai/dsh-tool-jobs':
-        specifier: workspace:*
-        version: link:../../jobs/tool-jobs
-      '@deepseek-ai/dsh-tool-subagent':
-        specifier: workspace:*
-        version: link:../tool-subagent
-      '@deepseek-ai/dsh-tools':
-        specifier: workspace:*
-        version: link:../../core/tools
-
   packages/subagent/subagent-codex:
     dependencies:
       '@deepseek-ai/dsh-brand':
@@ -14380,9 +14255,6 @@ importers:
       '@deepseek-ai/dsh-hook-protocol':
         specifier: workspace:*
         version: link:../../packages/hooks/hook-protocol
-      '@deepseek-ai/dsh-hooks-claude-code':
-        specifier: workspace:*
-        version: link:../../packages/hooks/hooks-claude-code
       '@deepseek-ai/dsh-hooks-codex':
         specifier: workspace:*
         version: link:../../packages/hooks/hooks-codex
@@ -14935,69 +14807,8 @@ packages:
   '@antfu/install-pkg@1.1.0':
     resolution: {integrity: sha512-MGQsmw10ZyI+EJo45CdSER4zEb+p31LpDAFp2Z3gkSd1yqVZGi0Ebx++YTEMonJy4oChEMLsxZ64j8FH6sSqtQ==}
 
-  '@anthropic-ai/claude-agent-sdk-darwin-arm64@0.3.263':
-    resolution: {integrity: sha512-H4eLd4Tkx3rJkt739CHb+9AcaKiiOpibU4tYsmma47mV+2zAPjUyFxpuE2N57VSmpAgbLQxu44du0TFN+UH5dg==}
-    cpu: [arm64]
-    os: [darwin]
-
-  '@anthropic-ai/claude-agent-sdk-darwin-x64@0.3.263':
-    resolution: {integrity: sha512-jKwmfkem1s/TcK7u83cJf2zLHMz846irV4vqYGUlo74uX2qfX57R4UsrCMlcTUMou/U9vQyNCc/Kk0s+zSxYRg==}
-    cpu: [x64]
-    os: [darwin]
-
-  '@anthropic-ai/claude-agent-sdk-linux-arm64-musl@0.3.263':
-    resolution: {integrity: sha512-TiOmi9mqYvu3uGgM+0eQrUQzgXb7pgTzqahtRyEjpJrNigddGoANHcbNKL7P7y4etJpyIuYXGuVh5SLJzySYVA==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [musl]
-
-  '@anthropic-ai/claude-agent-sdk-linux-arm64@0.3.263':
-    resolution: {integrity: sha512-2KPY1wu1hdjpVsw+Tg3i50uhxhhetO1fB24wjUJAQJ8YPSogqO32UbtYPJ6I3F17lBNHb/Mq3nRYGAuSU5yjtg==}
-    cpu: [arm64]
-    os: [linux]
-    libc: [glibc]
-
-  '@anthropic-ai/claude-agent-sdk-linux-x64-musl@0.3.263':
-    resolution: {integrity: sha512-PWctt/XjebBxtI37i2xx2OMxSscPMnKmxU82MWdtIvoAyJ40U5yfqpm92fm45R02eLn9j4LQpvNocVTcRAHv+g==}
-    cpu: [x64]
-    os: [linux]
-    libc: [musl]
-
-  '@anthropic-ai/claude-agent-sdk-linux-x64@0.3.263':
-    resolution: {integrity: sha512-un7HJzTT+DSQLgM33emQ0qHAwIY3CXIwe8JXoD9PaT7pdLepK4Ffa4r5j84pHTVS5uoGqxcf196tBgqb5/Z7FA==}
-    cpu: [x64]
-    os: [linux]
-    libc: [glibc]
-
-  '@anthropic-ai/claude-agent-sdk-win32-arm64@0.3.263':
-    resolution: {integrity: sha512-n8owOwNSSi7/KpONb/ut+uXRjBIp9N6EjwADiB+YygPwGRtpWP+PR/qFsGdTVBE5cpPwhgKVAf27xEZEfNvcSQ==}
-    cpu: [arm64]
-    os: [win32]
-
-  '@anthropic-ai/claude-agent-sdk-win32-x64@0.3.263':
-    resolution: {integrity: sha512-EwqzsOLxIJTX6RIXtQ21ekOKmYBNfwbtGtqaPqdWZGzpMbHaie8kGsM630h9RFaoxeytS/jbg8B3fPCdUKfhPw==}
-    cpu: [x64]
-    os: [win32]
-
-  '@anthropic-ai/claude-agent-sdk@0.3.263':
-    resolution: {integrity: sha512-0QWoHgWWlSmgXfEqZRbVYRoXT9p4tx/yKaZ4eLJ8l1MR65SIvMGR+cd5ZXUpGYZpj9RzbYiYU9LoFg90mdIjmw==}
-    engines: {node: '>=18.0.0'}
-    peerDependencies:
-      '@anthropic-ai/sdk': '>=0.93.0'
-      '@modelcontextprotocol/sdk': ^1.29.0
-      zod: ^4.0.0
-
   '@anthropic-ai/sdk@0.124.0':
     resolution: {integrity: sha512-cN5O8i9UVxHeOQAzj/XjshWXG8KiibJDw9OGpH2Z/eR3n/RBxdoLxDJOcfqAJWvjaMDFfHTBADU04hWRJVkDyA==}
-    hasBin: true
-    peerDependencies:
-      zod: ^3.25.0 || ^4.0.0
-    peerDependenciesMeta:
-      zod:
-        optional: true
-
-  '@anthropic-ai/sdk@0.93.0':
-    resolution: {integrity: sha512-q9vaSZQVFx6B/gPxetGYfLXSJD5v0sOmh0OpZDq7yCrTSA+Rscvrtyol7JJTW40wEpQB4U1B4JXzxQitbQ3CAA==}
     hasBin: true
     peerDependencies:
       zod: ^3.25.0 || ^4.0.0
@@ -22340,55 +22151,10 @@ snapshots:
       package-manager-detector: 1.6.0
       tinyexec: 1.2.4
 
-  '@anthropic-ai/claude-agent-sdk-darwin-arm64@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-darwin-x64@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-linux-arm64-musl@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-linux-arm64@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-linux-x64-musl@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-linux-x64@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-win32-arm64@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk-win32-x64@0.3.263':
-    optional: true
-
-  '@anthropic-ai/claude-agent-sdk@0.3.263(@anthropic-ai/sdk@0.93.0(zod@4.4.3))(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(zod@4.4.3)':
-    dependencies:
-      '@anthropic-ai/sdk': 0.93.0(zod@4.4.3)
-      '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.3)
-      zod: 4.4.3
-    optionalDependencies:
-      '@anthropic-ai/claude-agent-sdk-darwin-arm64': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-darwin-x64': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-linux-arm64': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-linux-arm64-musl': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-linux-x64': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-linux-x64-musl': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-win32-arm64': 0.3.263
-      '@anthropic-ai/claude-agent-sdk-win32-x64': 0.3.263
-
   '@anthropic-ai/sdk@0.124.0(zod@4.4.3)':
     dependencies:
       json-schema-to-ts: 3.1.1
       standardwebhooks: 1.1.1
-    optionalDependencies:
-      zod: 4.4.3
-
-  '@anthropic-ai/sdk@0.93.0(zod@4.4.3)':
-    dependencies:
-      json-schema-to-ts: 3.1.1
     optionalDependencies:
       zod: 4.4.3
 
@@ -22843,15 +22609,15 @@ snapshots:
     transitivePeerDependencies:
       - '@algolia/client-search'
 
-  '@earendil-works/pi-ai@0.87.1(patch_hash=b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f)(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(ws@8.21.0)(zod@4.4.3)':
+  '@earendil-works/pi-ai@0.87.1(patch_hash=b9bcce474fb2ac44633dff0fa722816a5bff5451b4575d5874035ea14ba70a4f)(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))(supports-color@9.4.0)(ws@8.21.0)(zod@4.4.3)':
     dependencies:
       '@anthropic-ai/sdk': 0.124.0(zod@4.4.3)
       '@aws-sdk/client-bedrock-runtime': 3.1127.0
       '@earendil-works/pi-telemetry': 0.87.1
       '@google/genai': 2.21.0(@modelcontextprotocol/sdk@1.29.0(zod@4.4.3))
       '@smithy/node-http-handler': 4.12.1
-      http-proxy-agent: 9.1.0
-      https-proxy-agent: 9.1.0
+      http-proxy-agent: 9.1.0(supports-color@9.4.0)
+      https-proxy-agent: 9.1.0(supports-color@9.4.0)
       openai: 6.40.0(ws@8.21.0)(zod@4.4.3)
       partial-json: 0.1.7
       typebox: 1.3.27
@@ -27034,7 +26800,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  http-proxy-agent@9.1.0:
+  http-proxy-agent@9.1.0(supports-color@9.4.0):
     dependencies:
       agent-base: 9.0.0
       debug: 4.4.3(supports-color@9.4.0)
@@ -27093,7 +26859,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  https-proxy-agent@9.1.0:
+  https-proxy-agent@9.1.0(supports-color@9.4.0):
     dependencies:
       agent-base: 9.0.0
       debug: 4.4.3(supports-color@9.4.0)

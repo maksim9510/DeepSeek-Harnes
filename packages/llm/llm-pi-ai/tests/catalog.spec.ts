@@ -557,13 +557,14 @@ describe('catalog routes with per-model configuration', () => {
   })
 
   it('keeps each model its own endpoint when the catalog route declares none', () => {
-    // `opencode` ships no provider-level endpoint: the address lives on every
-    // catalog model, so the route resolves without any configured baseURL.
-    const resolved = resolveProfiles({ opencode: {} })
-    const models = resolved.get('opencode')?.piProvider?.getModels() ?? []
+    // `cloudflare-workers-ai` ships no provider-level endpoint: the address
+    // lives on every catalog model, so the route resolves without any
+    // configured baseURL.
+    const resolved = resolveProfiles({ 'cloudflare-workers-ai': {} })
+    const models = resolved.get('cloudflare-workers-ai')?.piProvider?.getModels() ?? []
     expect(models.length).toBeGreaterThan(0)
     expect(models.every(model => model.baseUrl.length > 0)).toBe(true)
-    expect(resolved.get('opencode')?.piProvider?.baseUrl).toBeUndefined()
+    expect(resolved.get('cloudflare-workers-ai')?.piProvider?.baseUrl).toBeUndefined()
   })
 
   it('repoints a catalog route at another wire protocol without restating its endpoint', () => {
@@ -835,17 +836,17 @@ describe('compat switches', () => {
   })
 
   it('skips models of other protocols on a mixed route instead of failing them', () => {
-    const catalog = getBuiltinModels('opencode') as readonly Model<Api>[]
+    const catalog = getBuiltinModels('github-copilot') as readonly Model<Api>[]
     const completions = catalog.find(model => model.api === 'openai-completions')
     const responses = catalog.find(model => model.api === 'openai-responses')
-    if (completions === undefined || responses === undefined) throw new Error('opencode ships no mixed catalog')
+    if (completions === undefined || responses === undefined) throw new Error('github-copilot ships no mixed catalog')
 
     const models = modelsOf({
-      opencode: {
+      'github-copilot': {
         compat: { supportsReasoningEffort: false },
         models: [{ id: completions.id }, { id: responses.id }],
       },
-    }, 'opencode')
+    }, 'github-copilot')
 
     expect((models.get(completions.id)?.compat as OpenAICompletionsCompat).supportsReasoningEffort).toBe(false)
     expect(models.get(responses.id)?.compat).toEqual(responses.compat)
@@ -914,18 +915,18 @@ describe('compat switches', () => {
   })
 
   it('lands each route switch only on the models whose protocol declares it', () => {
-    const catalog = getBuiltinModels('opencode') as readonly Model<Api>[]
+    const catalog = getBuiltinModels('github-copilot') as readonly Model<Api>[]
     const completions = catalog.find(model => model.api === 'openai-completions')
     const responses = catalog.find(model => model.api === 'openai-responses')
-    if (completions === undefined || responses === undefined) throw new Error('opencode ships no mixed catalog')
+    if (completions === undefined || responses === undefined) throw new Error('github-copilot ships no mixed catalog')
 
     const models = modelsOf({
-      opencode: {
+      'github-copilot': {
         // Both protocols take the first switch; only completions takes the second.
         compat: { supportsDeveloperRole: false, thinkingFormat: 'openai' },
         models: [{ id: completions.id }, { id: responses.id }],
       },
-    }, 'opencode')
+    }, 'github-copilot')
 
     const onCompletions = models.get(completions.id)?.compat as OpenAICompletionsCompat
     expect(onCompletions.supportsDeveloperRole).toBe(false)

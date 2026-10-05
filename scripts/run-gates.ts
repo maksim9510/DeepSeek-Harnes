@@ -887,7 +887,6 @@ function builtBinSmokeGate(needs: string[] = ['build']): Gate {
     'packages/deliverables/tool-present/tests/built-errors.e2e.ts',
     'packages/subprocess/subprocess-local/tests/spawn-runner-built.e2e.ts',
     'packages/subagent/subagent-codex/tests/loader-composition.e2e.ts',
-    'packages/subagent/subagent-claude-code/tests/loader-composition.e2e.ts',
     'packages/api/remotes/tests/built-lib.e2e.ts',
     'packages/experimental/agent-team/tests/built-lib.e2e.ts',
     // Built execution consumers: the only automated proof that package-name

@@ -42,8 +42,6 @@
       - option "nvidia"
       - option "openai"
       - option "openai-codex"
-      - option "opencode"
-      - option "opencode-go"
       - option "openrouter"
       - option "qwen-token-plan"
       - option "qwen-token-plan-cn"

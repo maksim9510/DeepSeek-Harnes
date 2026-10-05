@@ -163,6 +163,13 @@ const CHAT_TEMPLATE_VAR_GATE: Record<PiAiChatTemplateVar, true> = {
 /** The request-state placeholders a profile may name. */
 export const CHAT_TEMPLATE_VARS = Object.keys(CHAT_TEMPLATE_VAR_GATE) as readonly PiAiChatTemplateVar[]
 
+/**
+ * Catalog provider ids the harness no longer serves; the installed pi-ai catalog
+ * still ships them, so every reader filters them out instead of advertising
+ * routes the deployment will not run.
+ */
+const HIDDEN_PROVIDER_IDS = new Set(['opencode', 'opencode-go'])
+
 let providerIndex: Map<string, Provider> | undefined
 
 /**
@@ -172,7 +179,11 @@ let providerIndex: Map<string, Provider> | undefined
  * @returns the catalog provider index.
  */
 function catalogProviders(): Map<string, Provider> {
-  providerIndex ??= new Map(builtinProviders().map(provider => [provider.id, provider]))
+  providerIndex ??= new Map(
+    builtinProviders()
+      .filter(provider => !HIDDEN_PROVIDER_IDS.has(provider.id))
+      .map(provider => [provider.id, provider]),
+  )
   return providerIndex
 }
 
@@ -186,11 +197,11 @@ export function catalogProvider(provider: string): Provider | undefined {
 }
 
 /**
- * Every provider route the installed pi-ai catalog ships.
- * @returns the catalog provider ids.
+ * Every provider route the harness serves from the installed pi-ai catalog.
+ * @returns the catalog provider ids the harness advertises.
  */
 export function catalogProviderIds(): readonly string[] {
-  return getBuiltinProviders()
+  return getBuiltinProviders().filter(id => !HIDDEN_PROVIDER_IDS.has(id))
 }
 
 /**
