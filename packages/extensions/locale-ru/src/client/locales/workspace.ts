@@ -117,8 +117,8 @@ export const ru = {
   'shortcut.noPicker': 'Выборщик каталогов недоступен',
   'shortcut.noSession': 'Сначала выберите сессию',
   'viewOptions.hideArchived': 'Скрыть архивные',
-  'draft.initializationFailed': 'Could not fill the draft. Please try again shortly.',
-  'draft.workspaceRequired': 'Choose a workspace first.',
-  'toast.forkRequiresOpen': 'Open the original session to complete migration before creating a branch.',
-  'toast.openForkSource': 'Open original session',
+  'draft.initializationFailed': 'Не удалось заполнить черновик. Повторите попытку через несколько секунд.',
+  'draft.workspaceRequired': 'Сначала выберите рабочее пространство.',
+  'toast.forkRequiresOpen': 'Откройте исходную сессию, чтобы завершить миграцию, прежде чем создавать ветку.',
+  'toast.openForkSource': 'Открыть исходную сессию',
 } satisfies Record<LocaleNamespaceMap['workspace'], string>

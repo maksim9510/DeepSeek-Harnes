@@ -7,9 +7,9 @@ import type { LocaleNamespaceMap } from '@deepseek-ai/dsh-client-ui-slots'
 export const ru = {
   tab: 'Список плагинов',
   loading: 'Чтение плагинов…',
-  clientSyncing: 'Syncing plugins on this page…',
-  clientSyncFailed: 'Some plugins could not sync on this page. Host enablement is unchanged.',
-  clientSyncRetry: 'Retry this page',
+  'clientSyncing': 'Синхронизация плагинов на этой странице…',
+  'clientSyncFailed': 'Часть плагинов не удалось синхронизировать на этой странице. Состояние включения на стороне хоста не изменилось.',
+  'clientSyncRetry': 'Повторить для этой страницы',
   error: 'Плагины временно недоступны.',
   metadataError: 'Ошибка метаданных пакета: {error}',
   retry: 'Повторить',

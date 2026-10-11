@@ -23,9 +23,9 @@ export const ru = {
   'warning.groupLoad': 'Не удалось загрузить {name}: {message}',
   'empty.models': 'Нет доступных моделей.',
   'empty.efforts': 'У этой модели нет уровней рассуждений.',
-  'error.sessionInUse': 'This session is already in use, possibly by another running DSH instance (such as dsh web or the desktop app). Quit other running DSH instances and try again.',
+  'error.sessionInUse': 'Эта сессия уже используется, возможно другим запущенным экземпляром DSH (например dsh web или настольным приложением). Закройте остальные экземпляры DSH и попробуйте снова.',
   'provider.account': 'Аккаунт DeepSeek',
-  'search.clear': 'Clear search',
-  'search.empty': 'No matching models.',
-  'search.placeholder': 'Search models…',
+  'search.clear': 'Очистить поиск',
+  'search.empty': 'Подходящих моделей нет.',
+  'search.placeholder': 'Поиск моделей…',
 } satisfies Record<LocaleNamespaceMap['model'], string>
