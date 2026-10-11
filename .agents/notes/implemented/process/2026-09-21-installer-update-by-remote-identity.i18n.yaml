@@ -1,6 +1,19 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for 2026-09-21-installer-update-by-remote-identity.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/process/2026-09-21-installer-update-by-remote-identity.md
-2026-09-21-installer-update-by-remote-identity.md: 600115ff5e441fda4adc7efc929406a6164d8080
-2026-09-21-installer-update-by-remote-identity.zh.md: 0bb9708384a03bfe7cb496b403defbd913067dd1
+/agent-note-the-installer-updates-a-checkout-by-remote-identity:
+  en: ebe3d30b670c7801
+  zh: dd30def143621621
+/agent-note-the-installer-updates-a-checkout-by-remote-identity/problem:
+  en: 9c20cc6e82846964
+  zh: 983e5d2beac2e976
+/agent-note-the-installer-updates-a-checkout-by-remote-identity/decision:
+  en: 6eaea61cc068fb15
+  zh: 19b489b8961ac0ad
+/agent-note-the-installer-updates-a-checkout-by-remote-identity/alternatives-considered:
+  en: 923744214a61fc45
+  zh: 3374788a061060b9
+/agent-note-the-installer-updates-a-checkout-by-remote-identity/consequences:
+  en: 1e686e05c6fab7a9
+  zh: 1fa8a24a47c340e1

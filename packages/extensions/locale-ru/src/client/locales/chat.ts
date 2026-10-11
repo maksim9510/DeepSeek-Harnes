@@ -191,4 +191,8 @@ export const ru = {
   'duration.hourUnit': 'h ',
   'duration.minuteUnit': 'm ',
   'duration.secondUnit': 's',
+  'settings.collapse.completion': 'On completion',
+  'settings.collapse.description': 'Choose when to automatically collapse work details',
+  'settings.collapse.nextInput': 'On next message',
+  'settings.collapse.title': 'When to Collapse Work Details',
 } satisfies Record<LocaleNamespaceMap['chat'], string>

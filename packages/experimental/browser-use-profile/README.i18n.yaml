@@ -1,6 +1,43 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write packages/experimental/browser-use-profile/README.md
-README.md: b8cfc765d04bfeba68d32d467d120ef1a13f07e8
-README.zh.md: d1ff89983a68cf69ad9911bb99453f10d3bf0d7b
+/:
+  en: bd95d8966b56e797
+  zh: 386cdddb0716615c
+/deepseek-ai-dsh-experimental-browser-use-profile:
+  en: 856a8f2d95bf3c72
+  zh: 32b1f7449eadb592
+/deepseek-ai-dsh-experimental-browser-use-profile/summary:
+  en: 7201aad0e4cdab93
+  zh: 40600f48a6d4d1d0
+/deepseek-ai-dsh-experimental-browser-use-profile/table-of-contents:
+  en: d152484eb41ac6b4
+  zh: 82098aa33e9fc15b
+/deepseek-ai-dsh-experimental-browser-use-profile/use-this-package:
+  en: bbff250eba0f1b89
+  zh: b20a47f82d8ab6e0
+/deepseek-ai-dsh-experimental-browser-use-profile/use-this-package/install-into-a-profile:
+  en: e0f7cff42b777250
+  zh: 99971cec643e68b4
+/deepseek-ai-dsh-experimental-browser-use-profile/use-this-package/what-you-get:
+  en: 8584592615913833
+  zh: 61a1c44a08a38136
+/deepseek-ai-dsh-experimental-browser-use-profile/understand-the-implementation:
+  en: f75425c7b6e0b88d
+  zh: 4871d462eda290b0
+/deepseek-ai-dsh-experimental-browser-use-profile/further-exploration:
+  en: f3bb0e92aaa62f9c
+  zh: de24f9978eb0b8aa
+/deepseek-ai-dsh-experimental-browser-use-profile/model-experience:
+  en: 479fc4bc15176b6e
+  zh: b023d20276b11d00
+/deepseek-ai-dsh-experimental-browser-use-profile/model-experience/kv-cache-effect:
+  en: fc1c9ea7fb0a5bcb
+  zh: f224fae6ef7f2b2e
+/deepseek-ai-dsh-experimental-browser-use-profile/known-limitations-and-deferred-work:
+  en: 57564576755d3b31
+  zh: 0275b09c72c7b734
+/deepseek-ai-dsh-experimental-browser-use-profile/known-limitations-and-deferred-work/dev-note:
+  en: ae02cc1c1e68ed29
+  zh: da6d1b0457a348c8

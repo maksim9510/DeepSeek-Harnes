@@ -1,6 +1,19 @@
-# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
-# side as of the last confirmed-consistent state. Both languages carry equal authority;
-# after editing either side, bring the other along and re-record with:
+# Bilingual-pair consistency record for 2026-09-07-sync-locale-adaptation-loop.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
 #   pnpm run verify-translation-pairing --write .agents/notes/implemented/process/2026-09-07-sync-locale-adaptation-loop.md
-2026-09-07-sync-locale-adaptation-loop.md: c258f7025c9d35a429915df5cfea5c18c2f4217d
-2026-09-07-sync-locale-adaptation-loop.zh.md: c7422b8703f5766d5464904fc09cff93142694a4
+/agent-note-sync-locale-adaptation-loop-must-verify-the-final-adaptation:
+  en: 243787d8877403e1
+  zh: 1cd7102116822448
+/agent-note-sync-locale-adaptation-loop-must-verify-the-final-adaptation/problem:
+  en: 3160e82a033ac449
+  zh: 911f57f7fa2bed41
+/agent-note-sync-locale-adaptation-loop-must-verify-the-final-adaptation/decision:
+  en: fccf6dd032c1f49d
+  zh: b15a25b20a3a3965
+/agent-note-sync-locale-adaptation-loop-must-verify-the-final-adaptation/alternatives-considered:
+  en: 58fbfb9a6277718a
+  zh: 613156cabec4bdf8
+/agent-note-sync-locale-adaptation-loop-must-verify-the-final-adaptation/consequences:
+  en: 2a81edcb3671d4e3
+  zh: 50425cbb91d4130b

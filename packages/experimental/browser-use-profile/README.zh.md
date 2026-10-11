@@ -35,6 +35,7 @@ dsh plugin --profile web add @deepseek-ai/dsh-experimental-browser-use-profile
 
 用 `dsh plugin --profile web remove @deepseek-ai/dsh-experimental-browser-use-profile` 移除时，浏览器工具与 GUI URL 变量会一同移除。
 
+<a id="what-you-get"></a>
 ### 你能得到什么
 
 每个 Session 都会获得 Playwright MCP 浏览器工具。由于该组合包同时发布 `DSH_WEB_AUTH_URL`，Session 可以驱动正在运行的 GUI——打开右侧浏览器面板、新增标签页、点击，并读取控制台错误——而不是仅对无法看到的页面进行推理。选用该组合包也会打开右侧边栏内置的浏览器：`dsh-web-app` 对除 `desktop` 以外的所有 profile 都以禁用状态挂载该行，而让 Session 驱动用户看不到的页面是更差的答案，因此本组合包更靠后的层会启用它。浏览器二进制为 Chromium；本 fork 的安装器会准备所固定的提供方所需的版本。

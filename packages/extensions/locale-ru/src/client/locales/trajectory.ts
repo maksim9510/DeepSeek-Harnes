@@ -162,7 +162,6 @@ export const ru = {
   'details.error': 'Ошибка',
   'details.failure.auth': 'API-ключ недействителен',
   'details.retry': 'Повторить',
-  'details.scheduled': 'Запланировано',
   'details.retryDelay': 'Задержка повтора',
   'details.result': 'Результат',
   'details.compacted': 'Сжато',
@@ -197,4 +196,5 @@ export const ru = {
   'layout.toolsChanged': 'Добавлено: {added}, удалено: {removed}',
   'layout.toolsRemoved': 'Удалены: {names}',
   'layout.toolsRemovedCount': 'Удалено: {count}',
+  'details.lastAttemptError': 'Last attempt error',
 } satisfies Record<LocaleNamespaceMap['trajectory'], string>

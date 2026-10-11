@@ -377,4 +377,6 @@ export const ru = {
   'ask.pendingDetail': 'These pending questions remain answerable from the composer.',
   'ask.reopen': 'Answer',
   'ask.review': 'View answers',
+  'row.commandArguments': 'Command arguments',
+  'terminal.commandLine': 'Command line {n}',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>

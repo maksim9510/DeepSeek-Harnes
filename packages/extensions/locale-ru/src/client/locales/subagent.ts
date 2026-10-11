@@ -44,4 +44,6 @@ export const ru = {
   'readonly.oneShot.body': 'Одноразовые задачи не принимают последующих сообщений; здесь можно просмотреть полную запись выполнения.',
   'readonly.body': 'Родительская сессия не в сети; откройте её заново, чтобы продолжить отправку сообщений.',
   'open.sidebar.aria': 'Open {label} in sidebar',
+  'catalog.migrationRequired': 'Migration required',
+  'mode.external': 'External task',
 } satisfies Record<LocaleNamespaceMap['subagent'], string>

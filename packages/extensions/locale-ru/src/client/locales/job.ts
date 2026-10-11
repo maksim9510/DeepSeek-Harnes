@@ -44,4 +44,5 @@ export const ru = {
   'terminal.collapseAria': 'Свернуть терминал',
   'terminal.expand': 'Развернуть',
   'terminal.expandAria': 'Развернуть терминал',
+  'terminal.commandLine': 'Command line {n}',
 } satisfies Record<LocaleNamespaceMap['job'], string>

@@ -46,7 +46,6 @@ kind: "package-reference"
 | [`src/client/locales/index.ts`](src/client/locales/index.ts) | `ru` 语言定义与命名空间 → 词典映射 |
 | [`src/client/locales/*.ts`](src/client/locales) | 每个命名空间一份俄语词典，在属主声明了键集之处与之绑定 |
 | [`src/index.ts`](src/index.ts) | Node 半端：为空；花名册行是普通的双面插件，故需存在 |
-| [`src/invariant.ts`](src/invariant.ts) | 每个包都必须具备的 no-op invariant 伴生插件 |
 
 Node 半端为空，因为本包只有浏览器面（`dsh.client.platform: "web"`）；但花名册扫描仍需要一个具备双面的普通包。
 

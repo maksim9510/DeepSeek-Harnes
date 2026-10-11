@@ -46,7 +46,6 @@ The package is one browser plugin plus data. The plugin entry contributes one Co
 | [`src/client/locales/index.ts`](src/client/locales/index.ts) | The `ru` language definition and the namespace → dictionary map |
 | [`src/client/locales/*.ts`](src/client/locales) | One Russian dictionary per namespace, pinned to its owner's key set where one is declared |
 | [`src/index.ts`](src/index.ts) | Node half: empty, present because the roster row is an ordinary dual-face plugin |
-| [`src/invariant.ts`](src/invariant.ts) | No-op invariant companion required of every package |
 
 The node half ships empty because the pack is browser-only (`dsh.client.platform: "web"`); the roster scan still needs an ordinary package with both faces.
 

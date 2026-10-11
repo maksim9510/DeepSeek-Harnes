@@ -119,4 +119,6 @@ export const ru = {
   'viewOptions.hideArchived': 'Скрыть архивные',
   'draft.initializationFailed': 'Could not fill the draft. Please try again shortly.',
   'draft.workspaceRequired': 'Choose a workspace first.',
+  'toast.forkRequiresOpen': 'Open the original session to complete migration before creating a branch.',
+  'toast.openForkSource': 'Open original session',
 } satisfies Record<LocaleNamespaceMap['workspace'], string>
