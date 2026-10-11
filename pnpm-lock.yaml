@@ -7691,29 +7691,29 @@ importers:
   packages/experimental/browser-use-profile:
     dependencies:
       '@deepseek-ai/dsh-browser-use':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../browser-use/browser-use
       '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../browser-use-playwright-mcp
     devDependencies:
       '@deepseek-ai/cordis':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../vendor/cordis
       '@deepseek-ai/cordis-plugin-include':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../vendor/include
       '@deepseek-ai/dsh-client-connection':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/connection
       '@deepseek-ai/dsh-host-webserver':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../host/webserver
       '@deepseek-ai/dsh-shell-env':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../shell/shell-env
       '@deepseek-ai/dsh-system-prompt':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../core/system-prompt
       js-yaml:
         specifier: ^4.2.0
@@ -9463,148 +9463,148 @@ importers:
   packages/extensions/locale-ru:
     devDependencies:
       '@deepseek-ai/cordis':
-        specifier: workspace:^
+        specifier: workspace:~
         version: link:../../../vendor/cordis
       '@deepseek-ai/dsh-client-locale':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/locale
       '@deepseek-ai/dsh-client-test-runtime':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../test-support/client-runtime
       '@deepseek-ai/dsh-client-ui-agent-preset':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-agent-preset
       '@deepseek-ai/dsh-client-ui-approval':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-approval
       '@deepseek-ai/dsh-client-ui-chat':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-chat
       '@deepseek-ai/dsh-client-ui-commands':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-commands
       '@deepseek-ai/dsh-client-ui-conversation':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-conversation
       '@deepseek-ai/dsh-client-ui-cordis':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../ui-cordis
       '@deepseek-ai/dsh-client-ui-deliverables':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-deliverables
       '@deepseek-ai/dsh-client-ui-directory-picker-browse':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-directory-picker-browse
       '@deepseek-ai/dsh-client-ui-goal':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-goal
       '@deepseek-ai/dsh-client-ui-input-trigger':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-input-trigger
       '@deepseek-ai/dsh-client-ui-jobs':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-jobs
       '@deepseek-ai/dsh-client-ui-message-feedback':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-message-feedback
       '@deepseek-ai/dsh-client-ui-model-selection':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-model-selection
       '@deepseek-ai/dsh-client-ui-open-in-app':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-open-in-app
       '@deepseek-ai/dsh-client-ui-permission-presets':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-permission-presets
       '@deepseek-ai/dsh-client-ui-plan':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-plan
       '@deepseek-ai/dsh-client-ui-plugin-manager':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-plugin-manager
       '@deepseek-ai/dsh-client-ui-reference':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-reference
       '@deepseek-ai/dsh-client-ui-schedule':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-schedule
       '@deepseek-ai/dsh-client-ui-settings-agent-loop':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-agent-loop
       '@deepseek-ai/dsh-client-ui-settings-general':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-general
       '@deepseek-ai/dsh-client-ui-settings-models':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-models
       '@deepseek-ai/dsh-client-ui-settings-plugin-inventory':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-plugin-inventory
       '@deepseek-ai/dsh-client-ui-settings-plugins':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-plugins
       '@deepseek-ai/dsh-client-ui-settings-session-log':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-session-log
       '@deepseek-ai/dsh-client-ui-settings-shell':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-shell
       '@deepseek-ai/dsh-client-ui-settings-subagent':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-subagent
       '@deepseek-ai/dsh-client-ui-settings-web-search':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-settings-web-search
       '@deepseek-ai/dsh-client-ui-shortcuts':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-shortcuts
       '@deepseek-ai/dsh-client-ui-sidebar':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-sidebar
       '@deepseek-ai/dsh-client-ui-sidebar-browser':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-sidebar-browser
       '@deepseek-ai/dsh-client-ui-sidebar-documentpreview':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-sidebar-documentpreview
       '@deepseek-ai/dsh-client-ui-sidebar-files':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-sidebar-files
       '@deepseek-ai/dsh-client-ui-sidebar-right':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-sidebar-right
       '@deepseek-ai/dsh-client-ui-sidebar-terminal':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-sidebar-terminal
       '@deepseek-ai/dsh-client-ui-skill':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-skill
       '@deepseek-ai/dsh-client-ui-slots':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-slots
       '@deepseek-ai/dsh-client-ui-subagent':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-subagent
       '@deepseek-ai/dsh-client-ui-theme':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-theme
       '@deepseek-ai/dsh-client-ui-trajectory':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-trajectory
       '@deepseek-ai/dsh-client-ui-user-questions':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-user-questions
       '@deepseek-ai/dsh-client-ui-workflow-run':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-workflow-run
       '@deepseek-ai/dsh-client-ui-workspace':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../client/ui-workspace
       '@deepseek-ai/dsh-experimental-client-ui-agent-team':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../experimental/client-ui-agent-team
       '@deepseek-ai/dsh-session-log-export':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../session-query/session-log-export
 
   packages/extensions/tool-cordis:
