@@ -257,7 +257,6 @@
       "@deepseek-ai/dsh-client-ui-cordis/client": ["./packages/extensions/ui-cordis/src/client"],
       "@deepseek-ai/dsh-client-locale-ru": ["./packages/extensions/locale-ru/src"],
       "@deepseek-ai/dsh-client-locale-ru/client": ["./packages/extensions/locale-ru/src/client"],
-      "@deepseek-ai/dsh-client-locale-ru/invariant": ["./packages/extensions/locale-ru/src/invariant.ts"],
       "@deepseek-ai/dsh-client-test-runtime": ["./packages/test-support/client-runtime/src"],
       "@deepseek-ai/dsh-client-shortcuts/protocol": ["./packages/client/shortcuts/src/protocol.ts"],
       "@deepseek-ai/dsh-client-shortcuts": ["./packages/client/shortcuts/src"],
