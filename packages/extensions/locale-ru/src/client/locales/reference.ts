@@ -17,4 +17,8 @@ export const ru = {
   'time.months': '{n} мес',
   'time.years': '{n} г',
   'section.subagents': 'Subagents',
+  'fileOpen.close': 'Закрыть',
+  'fileOpen.failed': 'Не удалось открыть «{path}». Попробуйте снова или закройте это сообщение.',
+  'fileOpen.retry': 'Повторить',
+  'fileOpen.title': 'Не удалось открыть файл',
 } satisfies Record<ReferenceKey, string>

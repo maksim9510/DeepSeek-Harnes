@@ -176,7 +176,6 @@ export const ru = {
   'settings.transcript.standard': 'Обычный',
   'settings.transcript.verbose': 'Подробный',
   'chat.deepDivingFor': 'Глубокое погружение в течение {duration}...',
-  'message.accountStopped': 'Задача остановлена',
   'message.failure.accountSignInRequired': 'Войдите в DeepSeek и убедитесь, что назначение запроса поддерживает аутентификацию по аккаунту.',
   'message.failure.accountSignedOut': 'Остановлено: вы вышли из аккаунта DeepSeek.',
   'message.failure.quota': 'Квота запросов исчерпана.',
@@ -195,4 +194,6 @@ export const ru = {
   'settings.collapse.description': 'Выберите, когда автоматически сворачивать подробности работы',
   'settings.collapse.nextInput': 'При следующем сообщении',
   'settings.collapse.title': 'Когда сворачивать подробности работы',
+  'message.failure.interrupted': 'Процесс DSH завершился до окончания этого хода (был принудительно остановлен, аварийно завершился или превысил тайм-аут при выключении), поэтому ход был закрыт при перезапуске DSH. Результаты незавершённых вызовов инструментов неизвестны.',
+  'message.taskStopped': 'Задача остановлена',
 } satisfies Record<LocaleNamespaceMap['chat'], string>

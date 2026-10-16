@@ -121,4 +121,7 @@ export const ru = {
   'draft.workspaceRequired': 'Сначала выберите рабочее пространство.',
   'toast.forkRequiresOpen': 'Откройте исходную сессию, чтобы завершить миграцию, прежде чем создавать ветку.',
   'toast.openForkSource': 'Открыть исходную сессию',
+  'menu.sessionId': 'Скопировать ID сессии',
+  'toast.sessionIdCopied': 'ID сессии скопирован',
+  'toast.sessionIdCopyFailed': 'Не удалось скопировать. Попробуйте снова.',
 } satisfies Record<LocaleNamespaceMap['workspace'], string>

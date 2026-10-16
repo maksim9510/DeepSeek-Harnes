@@ -39,4 +39,11 @@ export const ru = {
   'connection.reconnect': 'Нет подключения, переподключиться сейчас',
   'connection.restart': 'Подключение, перезапустить сейчас',
   'shortcut.open': 'Открыть настройки',
+  'hostRelease.description': 'Версия службы изменилась. Автообновление этой страницы приостановлено; перезагрузите её, чтобы загрузить новую версию.',
+  'hostRelease.later': 'Не сейчас',
+  'hostRelease.page': 'Страница',
+  'hostRelease.reload': 'Перезагрузить для перехода на новую версию',
+  'hostRelease.service': 'Служба',
+  'hostRelease.title': 'Версия службы изменилась',
+  'hostRelease.unknown': 'Неизвестно',
 } satisfies Record<LocaleNamespaceMap['settings'], string>

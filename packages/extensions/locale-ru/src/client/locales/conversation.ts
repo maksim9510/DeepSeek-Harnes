@@ -379,4 +379,6 @@ export const ru = {
   'ask.review': 'Посмотреть ответы',
   'row.commandArguments': 'Аргументы команды',
   'terminal.commandLine': 'Строка команды {n}',
+  'row.imageSize': '{width}×{height} px, {bytes} байт',
+  'row.imageSizeDownscaled': '{width}×{height} px (уменьшено с {originalWidth}×{originalHeight} px), {bytes} байт',
 } satisfies Record<LocaleNamespaceMap['conversation'], string>
