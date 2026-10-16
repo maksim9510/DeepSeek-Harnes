@@ -75,7 +75,7 @@ The package has two runtime parts. [`cordis.patch.yml`](cordis.patch.yml) is an 
 <a id="model-experience"></a>
 ## Model Experience
 
-Directly. This is the bundle that gives a Session browser tools, so it adds their schemas and results to the request, and it adds one prompt section plus one managed shell variable.
+Indirectly, through mounted browser tools and prompt contributions from dsh-browser-use and dsh-experimental-browser-use-playwright-mcp.
 
 #### KV Cache effect
 

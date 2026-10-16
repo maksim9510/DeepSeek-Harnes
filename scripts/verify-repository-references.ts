@@ -13,6 +13,7 @@ const organizationUrl = new RegExp(`\\bgithub\\.com/${organization}(?![a-z0-9-])
 const kitRepositoryUrl = new RegExp(`\\bgithub\\.com/${organization}/libreoffice-kit(?:\\.git)?(?=/|[^a-zA-Z0-9_.-]|$)`, 'g')
 const commitCandidate = /(?<![a-z0-9])[\da-f]{7,40}(?![a-z0-9])/gi
 const excludedPrefixes = ['vendor/', '.agents/notes/archived/']
+const excludedFiles = new Set(['pnpm-lock.yaml', 'python/sdk/uv.lock'])
 const gitOutputLimit = 64 * 1024 * 1024
 // One 41-byte line per object; 1.2 million objects produce about 49 MiB.
 const objectListingLimit = 1024 * 1024 * 1024
@@ -28,7 +29,7 @@ export interface RepositoryReference {
 }
 
 function isMaintained(file: string): boolean {
-  return !excludedPrefixes.some(prefix => file.startsWith(prefix))
+  return !excludedPrefixes.some(prefix => file.startsWith(prefix)) && !excludedFiles.has(file)
 }
 
 /**

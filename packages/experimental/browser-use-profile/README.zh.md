@@ -18,7 +18,7 @@ kind: "package-bundle"
 - [延伸阅读](#further-exploration)
 - [模型体验](#model-experience)
 - [已知限制与待办工作](#known-limitations-and-deferred-work)
-- [开发者说明](#dev-note)
+- [开发备注](#dev-note)
 
 -----
 
@@ -76,7 +76,7 @@ dsh plugin --profile web add @deepseek-ai/dsh-experimental-browser-use-profile
 <a id="model-experience"></a>
 ## 模型体验
 
-直接相关。正是该组合包为 Session 提供浏览器工具，因此它会把工具 schema 与结果加入请求，并新增一个提示词段落和一个受管 shell 变量。
+通过 dsh-browser-use 与 dsh-experimental-browser-use-playwright-mcp 挂载的浏览器工具及提示词贡献间接产生影响。
 
 #### KV Cache 影响
 
@@ -93,7 +93,7 @@ dsh plugin --profile web add @deepseek-ai/dsh-experimental-browser-use-profile
 - **默认 headless。** 打过 patch 的提供方以 headless 运行；需要可见窗口的组合可以为 `browser-provider` 行覆盖 `headless`。
 
 <a id="dev-note"></a>
-### 开发者说明
+### 开发备注
 
 <details>
 <summary>面向维护者的工作背景——点击展开</summary>
