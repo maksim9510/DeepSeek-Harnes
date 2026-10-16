@@ -26,6 +26,7 @@ import { ru as reference } from './reference.ts'
 import { ru as scheduleCatalog } from './schedule-catalog.ts'
 import { ru as scheduleManager } from './schedule-manager.ts'
 import { ru as sessionLogDownload } from './session-log-download.ts'
+import { ru as settingsAccount } from './settings-account.ts'
 import { ru as settingsAgentLoop } from './settings-agent-loop.ts'
 import { ru as settingsAgentPreset } from './settings-agent-preset.ts'
 import { ru as settingsGeneral } from './settings-general.ts'
@@ -64,6 +65,7 @@ export const RU_DICTIONARIES: Readonly<Record<string, Readonly<Record<string, st
   'common': common,
   'settings.locale': settingsLocale,
   'settings': settingsGeneral,
+  'settings.account': settingsAccount,
   'settings.theme': settingsTheme,
   'settings.models': settingsModels,
   'settings.plugins': settingsPlugins,

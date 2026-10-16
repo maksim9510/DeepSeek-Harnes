@@ -9854,6 +9854,9 @@ importers:
       '@deepseek-ai/dsh-client-ui-schedule':
         specifier: workspace:*
         version: link:../../client/ui-schedule
+      '@deepseek-ai/dsh-client-ui-settings-account':
+        specifier: workspace:*
+        version: link:../../client/ui-settings-account
       '@deepseek-ai/dsh-client-ui-settings-agent-loop':
         specifier: workspace:*
         version: link:../../client/ui-settings-agent-loop

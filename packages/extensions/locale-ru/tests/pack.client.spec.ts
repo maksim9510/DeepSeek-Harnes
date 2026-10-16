@@ -75,6 +75,15 @@ describe('Russian language pack', () => {
     expect(b.locale.bind('common')('markdown.truncatedCharacters')).toBe('… усечено, всего {total} символов')
   })
 
+  it('serves Russian copy from settings.account and settings.theme dictionaries', async () => {
+    const b = await bench()
+    await packOf(b.ctx).await()
+    expect(b.locale.bind('settings.account')('nav')).toBe('Аккаунт')
+    expect(b.locale.bind('settings.account')('signedIn')).toBe('Выполнен вход в DeepSeek')
+    expect(b.locale.bind('settings.account')('balance')).toBe('Пополненный баланс')
+    expect(b.locale.bind('settings.theme')('fontSize.text.title')).toBe('Размер шрифта')
+  })
+
   it('disposal removes the language and dictionaries; the active locale falls back', async () => {
     const b = await bench()
     const fiber = packOf(b.ctx)
