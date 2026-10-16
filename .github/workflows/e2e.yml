@@ -125,7 +125,7 @@ jobs:
       # exports — the shape a real consumer runs. That requires a prior build.
       - name: Build (lib for the e2e example bins)
         if: steps.preflight.outputs.key == 'present'
-        run: ${{ github.event_name == 'pull_request' && 'pnpm run build --artifacts-only --profile official' || 'pnpm run build:official' }}
+        run: ${{ github.event_name == 'pull_request' && 'pnpm run build:artifacts --profile official' || 'pnpm run build:official' }}
 
       - name: Prepare Office runtime
         if: steps.preflight.outputs.key == 'present'

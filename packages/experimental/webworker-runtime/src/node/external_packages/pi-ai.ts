@@ -31,12 +31,11 @@ export const isContextOverflow = notImplementedFail(MODULE, 'isContextOverflow')
 export const builtinModels = notImplementedFail(MODULE, 'builtinModels')
 
 /**
- * Builtin provider ids as pi-ai 1.0.2 lists them, in catalog order, without the
- * `opencode` routes this deployment does not run. The list is a fixed copy that
- * pi-ai upgrades do not regenerate, so it omits providers added since.
+ * Preview provider ids, in catalog order. This fixed subset must use valid
+ * installed pi-ai identifiers so the adapter can attach authentication metadata.
  */
 const BUILTIN_PROVIDER_IDS: readonly string[] = [
-  'amazon-bedrock', 'ant-ling', 'anthropic', 'azure-openai-responses', 'baseten', 'cerebras',
+  'amazon-bedrock', 'ant-ling', 'anthropic', 'azure', 'baseten', 'cerebras',
   'cloudflare-ai-gateway', 'cloudflare-workers-ai', 'deepseek', 'fireworks', 'github-copilot',
   'google', 'google-vertex', 'groq', 'huggingface', 'kimi-coding', 'meta', 'minimax', 'minimax-cn',
   'mistral', 'moonshotai', 'moonshotai-cn', 'nvidia', 'openai', 'openai-codex', 'openrouter',
