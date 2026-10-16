@@ -48,13 +48,13 @@
     "@deepseek-ai/dsh-app-boot": "workspace:*",
     "@deepseek-ai/dsh-hmr": "workspace:*",
     "@deepseek-ai/dsh-agent-default-model": "workspace:*",
-    "yaml": "^2.8.1"
+    "yaml": "^2.9.1"
   },
   "dependencies": {
     "@deepseek-ai/dsh-util-values": "workspace:*",
     "@deepseek-ai/dsh-config-editor": "workspace:*",
     "@deepseek-ai/cordis-plugin-loader": "workspace:~",
     "@deepseek-ai/cosmokit": "workspace:~",
-    "yaml": "^2.8.1"
+    "yaml": "^2.9.1"
   }
 }
