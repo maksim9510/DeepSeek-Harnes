@@ -44,7 +44,7 @@
     "@deepseek-ai/dsh-session-projection": "workspace:*"
   },
   "dependencies": {
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@deepseek-ai/cordis": "workspace:~",

@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@deepseek-ai/dsh-util-crypto": "workspace:*",
-    "zod": "4.4.3"
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@deepseek-ai/dsh-agent": "workspace:*",
