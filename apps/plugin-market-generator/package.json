@@ -11,7 +11,7 @@
   "dependencies": {
     "@deepseek-ai/dsh-plugin-market-index": "workspace:*",
     "commander": "^15.0.0",
-    "hosted-git-info": "^9.0.3",
+    "hosted-git-info": "^10.1.1",
     "resolve.exports": "^2.0.3",
     "semver": "^7.8.5",
     "tar": "^7.5.22",
