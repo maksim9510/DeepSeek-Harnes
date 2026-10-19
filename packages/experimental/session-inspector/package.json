@@ -55,7 +55,7 @@
   "devDependencies": {
     "@deepseek-ai/dsh-client-test-runtime": "workspace:*",
     "@testing-library/react": "^16.3.3",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@deepseek-ai/dsh-api-session-controller": "workspace:*",
     "@deepseek-ai/dsh-client-store": "workspace:*",
     "@deepseek-ai/dsh-client-ui-chat": "workspace:*",
