@@ -15,7 +15,7 @@ Protected local work
   packages/bundle/web-app/cordis.patch.yml, tsconfig paths, package deps)
 * The universal installer (DeepSeek-install.py and its docs)
 * The local web search shim (tools/dsh-search-shim), which upstream has no
-  counterpart for
+  counterpart for, including its tests and the systemd start-limit hardening
 * The CLI source-launch resolution default (apps/cli/src/profile-boot.ts)
   was removed when upstream deleted the link backend: the file now matches
   upstream's runtime resolution shape
@@ -104,10 +104,22 @@ PROTECTED_MARKERS: List[Tuple[str, str]] = [
     ("package.json", "pnpm@"),
     # The shim is fork-only: upstream never has these paths, so a merge that
     # removed them means the fork lost its deployment source, not that a
-    # conflict was resolved.  The installer deploys from here.
+    # conflict was resolved.  The installer deploys from here.  Each marker
+    # names a mechanism a search depends on, not merely the file's presence:
+    # a merge that restored an older shim would satisfy a marker for the
+    # entrypoint name and silently reinstate the failure it replaced.
     ("tools/dsh-search-shim/server.mjs", "web_search_20250305"),
+    ("tools/dsh-search-shim/server.mjs", "createEnginePool"),
+    ("tools/dsh-search-shim/server.mjs", "createGateway"),
+    ("tools/dsh-search-shim/server.mjs", "classifyListenError"),
+    ("tools/dsh-search-shim/server.mjs", "DEFAULT_ENGINES"),
     ("tools/dsh-search-shim/provider-route.mjs", "resolveActiveRoute"),
+    ("tools/dsh-search-shim/provider-route.mjs", "cordis.patch.yml"),
+    ("tools/dsh-search-shim/provider-route.mjs", "routeFingerprint"),
+    ("tools/dsh-search-shim/tests/server.test.mjs", "createEnginePool"),
     ("DeepSeek-install.py", "SHIM_SOURCE_DIR"),
+    ("DeepSeek-install.py", "StartLimitBurst"),
+    ("DeepSeek-install.py", "_release_stale_shim"),
     # A deployed shim only answers when the provider targets it: the installer
     # writes the endpoint into the checkout `.env` and doctor repairs it, so a
     # merge that drops the wiring returns search to the upstream DeepSeek

@@ -35,9 +35,11 @@ import os
 import platform
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import urllib.error
+import time
 import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -867,11 +869,24 @@ class Doctor:
         code, out = run_capture(["systemctl", "--user", "is-active", SHIM_UNIT_NAME])
         state = out.strip()
         if code != 0 or state != "active":
+            main_pid = _unit_main_pid()
+            foreign = [pid for pid in _listen_pids(SHIM_PORT) if pid != main_pid]
+            if foreign:
+                return CheckResult(
+                    "search-shim",
+                    False,
+                    detail=(
+                        f"unit {SHIM_UNIT_NAME} is {state or 'not running'} and port {SHIM_PORT} is held "
+                        f"by PID {', '.join(str(pid) for pid in foreign)}, outside the unit"
+                    ),
+                    fix="python3 DeepSeek-install.py doctor --fix (stops the stale holder)",
+                    probe=self.check_search_shim,
+                )
             return CheckResult(
                 "search-shim",
                 False,
                 detail=f"unit {SHIM_UNIT_NAME} is {state or 'not running'}",
-                fix=f"python3 DeepSeek-install.py doctor --fix",
+                fix="python3 DeepSeek-install.py doctor --fix",
                 probe=self.check_search_shim,
             )
         problem = _shim_health()
@@ -1552,6 +1567,79 @@ def _shim_node() -> Optional[str]:
     return node if version_at_least(version, SHIM_NODE_MIN) else None
 
 
+def _listen_pids(port: int = SHIM_PORT) -> List[int]:
+    """Processes holding a listening socket on `port`, empty when none can be read.
+
+    A stale shim started outside the unit (a manual run, a crashed supervisor)
+    keeps the port, so the unit can never bind: every restart dies with
+    EADDRINUSE and the supervisor retries forever. Naming the holder is what
+    lets a deploy take the port back instead of looping.
+    """
+    pids: List[int] = []
+    code, out = run_capture(["ss", "-tlnp", f"sport = :{port}"])
+    if code == 0:
+        for match in re.finditer(r"pid=(\d+)", out):
+            pids.append(int(match.group(1)))
+    if not pids:
+        code, out = run_capture(["lsof", "-ti", f"tcp:{port}", "-sTCP:LISTEN"])
+        if code == 0:
+            for line in out.splitlines():
+                value = line.strip()
+                if value.isdigit():
+                    pids.append(int(value))
+    return sorted(set(pids))
+
+
+def _unit_main_pid() -> Optional[int]:
+    """Main PID of the shim unit, or None when the unit is not running."""
+    code, out = run_capture(["systemctl", "--user", "show", SHIM_UNIT_NAME, "-p", "MainPID", "--value"])
+    if code != 0:
+        return None
+    value = out.strip()
+    return int(value) if value.isdigit() and int(value) > 0 else None
+
+
+def _release_stale_shim(port: int = SHIM_PORT) -> None:
+    """Take the port back from a process the unit does not own.
+
+    Only a foreign holder is signalled: a listener that is already the unit's
+    main process is the running deployment, not a stale one.
+    """
+    owners = [pid for pid in _listen_pids(port) if pid != os.getpid()]
+    if not owners:
+        return
+    main_pid = _unit_main_pid()
+    for pid in owners:
+        if pid == main_pid:
+            continue
+        log_warn(f"Port {port} is held by PID {pid}, outside {SHIM_UNIT_NAME}; stopping it")
+        try:
+            os.kill(pid, signal.SIGTERM)
+        except OSError as exc:
+            log_warn(f"Could not stop PID {pid}: {exc}")
+            continue
+        deadline = time.monotonic() + 5.0
+        while time.monotonic() < deadline and _pid_alive(pid):
+            time.sleep(0.2)
+        if _pid_alive(pid):
+            log_warn(f"PID {pid} ignored SIGTERM; killing it")
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError as exc:
+                log_warn(f"Could not kill PID {pid}: {exc}")
+
+
+def _pid_alive(pid: int) -> bool:
+    """Whether a process still exists (or exists and is not ours to signal)."""
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+    return True
+
+
 def _shim_health(port: int = SHIM_PORT) -> Optional[str]:
     """Return None when the shim's health endpoint answers, else the problem."""
     try:
@@ -1581,20 +1669,31 @@ def _wait_for_shim_health(port: int = SHIM_PORT, timeout: float = 15.0) -> Optio
 
 
 def _render_shim_unit(node: str, target_dir: Path, port: int) -> str:
-    """Render the shim's systemd user unit for one deployment."""
+    """Render the shim's systemd user unit for one deployment.
+
+    `RestartPreventExitStatus=3` lets the shim report a fatal listen failure
+    (a port held by something other than itself) once and stop, and the start
+    limit stops a failing unit from retrying forever: a restart loop against a
+    port it can never take hides the real problem behind a log flood.
+    """
     return (
         "[Unit]\n"
         "Description=DSH web search shim (local Anthropic-compatible "
         "web_search_20250305 endpoint)\n"
         "After=network-online.target\n"
         "Wants=network-online.target\n"
+        "StartLimitIntervalSec=60\n"
+        "StartLimitBurst=5\n"
         "\n"
         "[Service]\n"
         "Type=simple\n"
         f"ExecStart={node} {target_dir / 'server.mjs'}\n"
         f"Environment=DSH_SEARCH_SHIM_PORT={port}\n"
         "Restart=on-failure\n"
-        "RestartSec=2\n"
+        "RestartSec=3\n"
+        "RestartPreventExitStatus=3\n"
+        "KillMode=mixed\n"
+        "TimeoutStopSec=5\n"
         "\n"
         "[Install]\n"
         "WantedBy=default.target\n"
@@ -1639,6 +1738,10 @@ def _deploy_shim(source_dir: Path) -> None:
     unit.write_text(_render_shim_unit(node, target_dir, SHIM_PORT), encoding="utf-8")
     run(["systemctl", "--user", "daemon-reload"])
     run(["systemctl", "--user", "enable", "--now", SHIM_UNIT_NAME])
+    # A port held by a process the unit does not own would make every restart
+    # die with EADDRINUSE, so take it back before asking the unit to restart.
+    _release_stale_shim()
+    run(["systemctl", "--user", "reset-failed", SHIM_UNIT_NAME])
     run(["systemctl", "--user", "restart", SHIM_UNIT_NAME])
 
     problem = _wait_for_shim_health()

@@ -10,11 +10,11 @@ Status: implemented
 
 ## 决定
 
-本分支把垫片作为分支本地源码放在 `tools/dsh-search-shim`，部署在包树之外，并由[安装器](../../../../DeepSeek-install.py)负责其部署。
+本分支把垫片作为分支本地源码放在 `tools/dsh-search-shim`，部署在包树之外，并由[安装器](../../../../DeepSeek-install.py)负责其部署。询问哪个提供方、以及由哪些无密钥引擎兜底，是[按路由发现而非列出](2026-10-22-search-shim-discovery.zh.md)。
 
-`server.mjs` 按提供方期望的格式作答，并拥有无凭据引擎（依次为 DuckDuckGo HTML、Bing、DuckDuckGo Lite）。`provider-route.mjs` 按请求解析 Agent 当前使用的提供方：从 `settings.yaml` 读取 `agent-default-model.provider`，从 `llm-pi-ai.providers.<provider>` 取 `baseURL`、`apiKeyEnv` 与模型，再从 `.credentials.yaml` 的 `refs.<apiKeyEnv>` 读取密钥。把路由映射到凭据的是路由的 `apiKeyEnv` 字段，而非其提供方名称。
+`server.mjs` 按提供方期望的格式作答，并拥有无凭据引擎池。`provider-route.mjs` 按请求解析 Agent 当前使用的提供方：从活动配置的 `cordis.patch.yml`（回退到已弃用的 `settings.yaml`）读取 `agent-default-model.provider`，从 `llm-pi-ai.providers.<provider>` 取 `baseURL`、`apiKeyEnv` 与模型，再从 `.credentials.yaml` 的 `refs.<apiKeyEnv>` 读取密钥。把路由映射到凭据的是路由的 `apiKeyEnv` 字段，而非其提供方名称。
 
-检索方式取决于解析出的路由。对已知搜索插件可用的网关先发起请求，使用 `exa` 引擎，并把其 `url_citation` 注解转换为结果区块。对已知不提供服务端搜索的提供方，跳过该请求直接使用无密钥引擎。其他任何提供方则尝试受门控的默认引擎。每条路由都会回退到无密钥引擎，两个层都会记录结果以及跳过或未命中密钥提供方的原因，因此日志会显示实际作答的是哪条检索路径。`DSH_SEARCH_SHIM_PROVIDER` 可为某次部署强制指定提供方，这也是在不修改设置的情况下检验回退层的方式。
+检索方式取决于解析出的路由。声明了端点与凭据的路由会被询问其网关的原生搜索，`url_citation` 注解被转换为结果区块；以无引用作答的网关会在进程生命周期内被记住。每条路由都会回退到无密钥引擎池，两个层都会记录结果以及跳过或未命中密钥提供方的原因，因此日志会显示实际作答的是哪条检索路径。`DSH_SEARCH_SHIM_PROVIDER` 可为某次部署强制指定提供方，`DSH_SEARCH_SHIM_ENGINE` 强制网关插件的引擎，这是在不修改设置的情况下检验任一层的方式。
 
 安装器把两个模块复制到 `~/.dsh/search-shim`，写入一个 systemd 用户单元（其 `ExecStart` 指向解析出的 `node` 绝对路径），启用并重启该单元，并在报告成功前等待健康端点就绪。它还会把 `DEEPSEEK_SEARCH_BASE_URL=http://127.0.0.1:24881/v1` 写入检出目录的 `.env`：当提供方没有 `baseURL` 配置时正是回退到该变量，因此部署无需设置步骤即可到达垫片；而在别处配置的端点保持不动。`doctor` 报告部署、单元状态与端点，`doctor --fix` 会从检出重新部署或补写。没有 systemd 用户管理器的机器会得到文件以及直接运行垫片的命令。检出不包含 `tools/dsh-search-shim` 并非缺陷：该项检查会被跳过，安装继续，因为 Web UI 在无网页搜索时仍可工作。
 
@@ -32,8 +32,8 @@ Status: implemented
 
 ## 后果
 
-执行 `python3 DeepSeek-install.py install` 后网页搜索即可工作，无需单独的设置步骤，因为安装器通过检出目录的 `.env` 中的 `DEEPSEEK_SEARCH_BASE_URL` 把提供方指向已部署的垫片；由于路由按请求解析，垫片会跟随 Agent 切换到的提供方，无需重启。`provider-route.mjs` 中的检索表是模块导入，因此修改它需要重启单元；而配置在请求时读取，不需要。
+执行 `python3 DeepSeek-install.py install` 后网页搜索即可工作，无需单独的设置步骤，因为安装器通过检出目录的 `.env` 中的 `DEEPSEEK_SEARCH_BASE_URL` 把提供方指向已部署的垫片；由于路由按请求解析，垫片会跟随 Agent 切换到的提供方，无需重启。`server.mjs` 中的引擎清单是模块导入，因此修改它需要重启单元；而配置在请求时读取，不需要。
 
-垫片依赖网关的 OpenAI 兼容插件契约以及无密钥引擎的标记，这两者都不稳定。网关侧的变化会表现为日志中的未命中与回退而非报错，而无密钥层正是密钥提供方失败时仍能作答的原因。提供方路由解析覆盖本部署所写入的块映射与流映射子集；`settings.yaml` 中的异常形状会解析为缺失路由并记录原因，而不是让搜索失败。
+垫片依赖网关的 OpenAI 兼容插件契约以及无密钥引擎的标记，这两者都不稳定。网关侧的变化会表现为日志中的未命中与回退而非报错，而无密钥层正是密钥提供方失败时仍能作答的原因。提供方路由解析覆盖本部署所写入的块映射、序列与流映射子集；这些文档中的异常形状会解析为缺失路由并记录原因，而不是让搜索失败。
 
 部署位于 Harness home 而非检出目录，因此它能跨越同步和检退回退，但不能跨越重装；安装器会重建它，`doctor --fix` 会修复被删除的部署。

@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for 2026-10-22-search-shim-discovery.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/feature/2026-10-22-search-shim-discovery.md
+/agent-note-a-search-shim-that-discovers-its-retrieval-instead-of-naming-it:
+  en: 22d7a9d924313e4d
+  zh: f3eb94bee25c4b33
+/agent-note-a-search-shim-that-discovers-its-retrieval-instead-of-naming-it/problem:
+  en: d31ddaf377ad837a
+  zh: 063a4bb5dabb0b7c
+/agent-note-a-search-shim-that-discovers-its-retrieval-instead-of-naming-it/decision:
+  en: 08f8e93d3971b824
+  zh: a8ac666e2ad6bd0a
+/agent-note-a-search-shim-that-discovers-its-retrieval-instead-of-naming-it/alternatives-considered:
+  en: d681c7cdfd1edfac
+  zh: f9ea122948156241
+/agent-note-a-search-shim-that-discovers-its-retrieval-instead-of-naming-it/consequences:
+  en: c321729f0384ac13
+  zh: 875509b0efbd205b
