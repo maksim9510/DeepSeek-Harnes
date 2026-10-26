@@ -45,8 +45,8 @@ describe('browser use profile bundle', () => {
     expect(manifest.publishConfig?.access).toBe('public')
     expect(manifest.dsh?.bundle?.patch).toBe('./cordis.patch.yml')
     expect(manifest.dependencies).toEqual({
-      '@deepseek-ai/dsh-browser-use': 'workspace:^',
-      '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp': 'workspace:^',
+      '@deepseek-ai/dsh-browser-use': 'workspace:*',
+      '@deepseek-ai/dsh-experimental-browser-use-playwright-mcp': 'workspace:*',
     })
   })
 

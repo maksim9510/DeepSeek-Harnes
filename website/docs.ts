@@ -144,7 +144,7 @@ const homeAndGuide = pairedPages([
     label: { root: '网络代理', en: 'Network proxy' },
     sidebar: { root: 'zh-guide', en: 'en-guide' },
     section: { root: '入门', en: 'Guide' },
-    order: 3,
+    order: 4,
   },
   {
     source: 'docs/user/guide/public-deployments.md',
@@ -152,7 +152,7 @@ const homeAndGuide = pairedPages([
     label: { root: '公开部署', en: 'Public deployments' },
     sidebar: { root: 'zh-guide', en: 'en-guide' },
     section: { root: '入门', en: 'Guide' },
-    order: 4,
+    order: 5,
   },
   {
     source: 'docs/user/guide/python-sdk.md',
@@ -181,7 +181,7 @@ const homeAndGuide = pairedPages([
   {
     source: 'docs/user/guide/plugin-market.md',
     route: 'guide/plugin-market.md',
-    label: { root: '插件市场', en: 'Plugin markets' },
+    label: { root: '插件索引', en: 'Plugin indexes' },
     sidebar: { root: 'zh-guide', en: 'en-guide' },
     section: { root: '集成', en: 'Integrations' },
     order: 2,

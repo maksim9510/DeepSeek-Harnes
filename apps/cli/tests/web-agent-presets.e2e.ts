@@ -1,3 +1,6 @@
+import { executeToolFixture } from '@deepseek-ai/dsh-tool-testkit'
+import { agentPresetProjectionDefinition } from '@deepseek-ai/dsh-agent-preset-registry'
+import { subagentModelSelectionProjectionDefinition } from '@deepseek-ai/dsh-tool-subagent/src/model-selection-state.ts'
 import { createRequire } from 'node:module'
 import { randomUUID } from 'node:crypto'
 import { mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from 'node:fs/promises'
@@ -42,7 +45,6 @@ const WEB_BUNDLE = join(REPO_ROOT, 'packages/bundle/web-app')
 const WEB_PATCHES = bundlePatchPaths(WEB_BUNDLE, (JSON.parse(readFileSync(join(WEB_BUNDLE, 'package.json'), 'utf8')) as { dsh: { bundle: { patch: string[] } } }).dsh.bundle)
 const webPatches = (label: string): PatchOptions[] => WEB_PATCHES.flatMap(file => loadOverlayPatches(label, file))
 const CODEX_PACKAGE_DIR = join(REPO_ROOT, 'packages/subagent/subagent-codex')
-const CLAUDE_CODE_PACKAGE_DIR = join(REPO_ROOT, 'packages/subagent/subagent-claude-code')
 /** The installation anchor whose dependency surface the runtime resolution mirrors. */
 const INSTALL_ANCHOR = join(REPO_ROOT, 'apps/cli/package.json')
 const MINIMAL_PROMPT = 'You are a helpful software engineer assistant.'
@@ -298,7 +300,7 @@ describe('the shipped Web composition', () => {
       // depend on ripgrep being present on the machine.
       expect(toolNames(ctx, handle.agent).filter(name => name !== 'glob' && name !== 'grep')).toEqual([
         'ask_user_question', 'bash', 'create_goal', 'edit', 'exit_plan_mode',
-        'get_goal', 'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents', 'present', 'read', 'read_image',
+        'get_goal', 'interrupt_agent', 'job_kill', 'job_list', 'job_output', 'list_agents', 'list_subagent_models', 'plugin_manager', 'present', 'read', 'read_image',
         'schedule_create', 'schedule_delete', 'schedule_list', 'schedule_update',
         'send_message', 'skill',
         'subagent', 'subagent_fork', 'todo_write', 'update_goal', 'web_fetch', 'web_search',
@@ -327,17 +329,25 @@ describe('the shipped Web composition', () => {
       sessionId: SessionId('preset-model-selection-enabled'),
       setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'standard').then(() => undefined),
     })
+    const policy = await ctx.sessionProjections.register(subagentModelSelectionProjectionDefinition)
     try {
-      expect(toolNames(ctx, disabled.agent)).not.toContain('list_subagent_models')
-      expect(toolParameterNames(ctx, disabled.agent, 'subagent')).not.toEqual(expect.arrayContaining([
+      expect(toolNames(ctx, disabled.agent)).toContain('list_subagent_models')
+      expect(toolParameterNames(ctx, disabled.agent, 'subagent')).toEqual(expect.arrayContaining([
         'model', 'provider', 'reasoning_effort',
       ]))
+      expect(policy.stateOf(disabled.agent.session)).toBeNull()
+      expect(policy.stateOf(enabled.agent.session)).toEqual([
+        { provider: 'deepseek-official', model: 'deepseek-v4-flash' },
+      ])
       expect(toolNames(ctx, enabled.agent)).toContain('list_subagent_models')
       expect(toolParameterNames(ctx, enabled.agent, 'subagent')).toEqual(expect.arrayContaining([
         'model', 'provider', 'reasoning_effort',
       ]))
-      expect(toolNames(ctx, disabled.agent)).not.toContain('list_subagent_models')
+      for (const agent of [disabled.agent, enabled.agent]) {
+        expect(toolParameterNames(ctx, agent, 'subagent_fork')).toEqual(['cwd', 'description', 'prompt'])
+      }
     } finally {
+      await policy.dispose()
       await ctx.settings.update(SUBAGENT_MODEL_SELECTION_SETTINGS_NAMESPACE, { enabled: false })
       await enabled.dispose()
       await disabled.dispose()
@@ -619,7 +629,7 @@ describe('the shipped Web composition', () => {
       expect(scoped).toContain('project-proof')
 
       // The preset's own loader tool resolves the global-layer skill.
-      const loaded = await ctx.tools.execute({
+      const loaded = await executeToolFixture(ctx, {
         callId: ToolCallId('preset-skills-load'),
         name: 'skill',
         arguments: { name: 'dsh-badge' },
@@ -673,15 +683,15 @@ describe('the shipped Web composition', () => {
 })
 
 describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surface) => {
-  const products = ['codex', 'claude-code'] as const
+  const products = ['codex'] as const
   type Product = typeof products[number]
-  const packageDir = (product: Product): string => (product === 'codex' ? CODEX_PACKAGE_DIR : CLAUDE_CODE_PACKAGE_DIR)
+  const packageDir = (): string => CODEX_PACKAGE_DIR
   const toolName = (product: Product): string => `subagent_${product.replaceAll('-', '_')}`
 
   async function bootSelected(installed: readonly Product[], extra: PatchOptions[] = []): Promise<Context> {
     const root = await mkdtemp(join(tmpdir(), `dsh-${surface}-native-bundles-`))
     onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
-    return await bootWeb(root, extra, installed.map(packageDir), [
+    return await bootWeb(root, extra, installed.map(() => packageDir()), [
       '@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app', ...installed.map(product => `@deepseek-ai/dsh-subagent-${product}`),
     ], surface)
   }
@@ -692,11 +702,11 @@ describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surfac
       setup: owner => productCtx.agentPresets.mount(owner, preset).then(() => undefined),
     })
     try {
-      return toolNames(productCtx, handle.agent).filter(name => /(?:subagent|custom)_(?:codex|claude_code)$/.test(name))
+      return toolNames(productCtx, handle.agent).filter(name => /(?:subagent|custom)_codex$/.test(name))
     } finally { await handle.dispose() }
   }
 
-  it.each([[[]], [['codex']], [['claude-code']], [['codex', 'claude-code']]] as Array<[Product[]]>)(
+  it.each([[[]], [['codex']]] as Array<[Product[]]>)(
     'adds the selected %j delegation tools to every preset as global tools', async (installed) => {
       const productCtx = await bootSelected(installed)
       const spawn = vi.spyOn(productCtx.subprocess, 'spawn')
@@ -727,9 +737,8 @@ describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surfac
     const providerConfig = { model: 'adoption-model', env: { DSH_NATIVE_ADOPTION: 'preserved' } }
     const productCtx = await bootSelected(products, [
       ...products.map(product => ({ id: `subagent-${product}`, config: providerConfig })),
-      { id: 'tool-subagent-codex', disabled: true },
-      { id: 'tool-subagent-claude-code', config: {
-        provider: 'claude-code', toolName: 'custom_claude_code', maxDepth: 'provider-managed',
+      { id: 'tool-subagent-codex', config: {
+        provider: 'codex', toolName: 'custom_codex', maxDepth: 'provider-managed',
       } },
     ])
     try {
@@ -738,7 +747,7 @@ describe.each(['web', 'desktop'] as const)('%s native subagent bundles', (surfac
           .toMatchObject(providerConfig)
       }
       for (const preset of ['standard', 'ptc', 'minimal']) {
-        expect(await presetTools(productCtx, preset)).toEqual(['custom_claude_code'])
+        expect(await presetTools(productCtx, preset)).toEqual(['custom_codex'])
       }
     } finally { await productCtx.fiber.dispose() }
   }, 120_000)
@@ -777,7 +786,7 @@ describe('a user preset declared from the shipped cordis rows', () => {
           ]))
         }
         const signal = new AbortController().signal
-        const listed = await copyCtx.tools.execute({
+        const listed = await executeToolFixture(copyCtx, {
           callId: ToolCallId('copied-preset-inspect-list'),
           name: 'cordis_inspect_list',
           arguments: {},
@@ -792,7 +801,7 @@ describe('a user preset declared from the shipped cordis rows', () => {
         // The `Tool` provider is the one built over the host context: it
         // answers with the shared registry's view of the REQUESTING agent,
         // so the copy sees its own preset's tools, not the host's empty set.
-        const queried = await copyCtx.tools.execute({
+        const queried = await executeToolFixture(copyCtx, {
           callId: ToolCallId('copied-preset-inspect-tools'),
           name: 'cordis_inspect_query',
           arguments: { platform: 'host', provider: 'Tool', method: 'listTools' },
@@ -809,12 +818,12 @@ describe('a user preset declared from the shipped cordis rows', () => {
           expect(queriedText).toContain(`"name": "${toolName}"`)
         }
 
-        // The `Config` provider reads the booted profile tree: the shipped `tools` row declares a Config,
+        // The `Config` provider reads the booted profile tree: the Agent loop declares a Config,
         // and the bootstrap include row is a carrier. The name filter keeps each page small.
         type ConfigRow = { id: string; patchId: string; name: string; status: string }
         type ConfigPage = { data: { entries: ConfigRow[]; total: number; nextOffset: number | null } }
         const listConfigs = async (input: Record<string, string | number>, callId: string): Promise<ConfigPage['data']> => {
-          const page = await copyCtx.tools.execute({
+          const page = await executeToolFixture(copyCtx, {
             callId: ToolCallId(callId),
             name: 'cordis_inspect_query',
             arguments: { platform: 'host', provider: 'Config', method: 'listConfigs', input },
@@ -824,16 +833,16 @@ describe('a user preset declared from the shipped cordis rows', () => {
           expect(page.isError, resultText(page)).toBe(false)
           return (JSON.parse(resultText(page)) as ConfigPage).data
         }
-        const toolsRows = await listConfigs({ name: '@deepseek-ai/dsh-tools' }, 'copied-preset-inspect-configs')
+        const toolsRows = await listConfigs({ name: '@deepseek-ai/dsh-agent-loop' }, 'copied-preset-inspect-configs')
         const toolsRow = toolsRows.entries[0]
-        expect(toolsRow).toMatchObject({ patchId: 'tools', status: 'schema' })
+        expect(toolsRow).toMatchObject({ patchId: 'agent-loop', status: 'schema' })
         expect(toolsRows).toMatchObject({ total: 1, nextOffset: null })
         const includes = await listConfigs({ name: 'cordis:include' }, 'copied-preset-inspect-includes')
         expect(includes.entries.find(entry => entry.patchId === 'include')).toMatchObject({ status: 'tree' })
         const firstPage = await listConfigs({ limit: 5 }, 'copied-preset-inspect-page')
         expect(firstPage.entries).toHaveLength(5)
         expect(firstPage.nextOffset).toBe(5)
-        const projected = await copyCtx.tools.execute({
+        const projected = await executeToolFixture(copyCtx, {
           callId: ToolCallId('copied-preset-inspect-config'),
           name: 'cordis_inspect_query',
           arguments: { platform: 'host', provider: 'Config', method: 'listConfigs', input: { entry: toolsRow!.id } },
@@ -845,7 +854,7 @@ describe('a user preset declared from the shipped cordis rows', () => {
         const { data } = JSON.parse(resultText(projected)) as { data: Projected }
         expect(data.status).toBe('schema')
         expect(data.schema.$defs).toHaveProperty('loaderExpression')
-        expect(JSON.stringify(data.schema)).toContain('"mode"')
+        expect(JSON.stringify(data.schema)).toContain('"maxParallelToolCalls"')
       } finally {
         await copied.dispose()
         await shipped.dispose()
@@ -873,7 +882,7 @@ describe('a switch survives the session', () => {
 
       // The header keeps the creation fact; the log carries what it runs.
       expect(handle.agent.session.header.agentPreset).toBe('standard')
-      expect(ctx.sessionProjections.stateOf(handle.agent.session, 'agentPreset')).toBe('minimal')
+      expect(ctx.sessionProjections.checkpoint(handle.agent.session).agentPreset?.val).toBe('minimal')
     } finally {
       await handle.dispose()
     }
@@ -888,7 +897,8 @@ describe('a forked session', () => {
       meta: { agentPreset: 'minimal' },
       setup: agentCtx => ctx.agentPresets.mount(agentCtx, 'minimal').then(() => undefined),
     })
-    const inherited = ctx.sessionProjections.stateOf(parent.agent.session, 'agentPreset') ?? undefined
+    const projection = await ctx.sessionProjections.register(agentPresetProjectionDefinition)
+    const inherited = projection.stateOf(parent.agent.session) ?? undefined
     const child = await ctx.agents.create({
       sessionId: SessionId('preset-fork-child'),
       seed: [],
@@ -943,7 +953,7 @@ describe('a delegated child', () => {
       ] as const
       for (const [name, args] of calls) {
         expect(toolNames(ctx, child.agent)).toContain(name)
-        const result = await ctx.tools.execute({
+        const result = await executeToolFixture(ctx, {
           callId: ToolCallId(`child-${name}`), signal: new AbortController().signal,
           name, arguments: args, agent: child.agent,
         })

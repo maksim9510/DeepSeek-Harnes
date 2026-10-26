@@ -26,7 +26,7 @@ import {
 import { assertInstalledTree, createPackedInstallation } from './packed-installation.ts'
 
 const root = fileURLToPath(new URL('../../../..', import.meta.url))
-const packages = ['@deepseek-ai/dsh-subagent-claude-code', '@deepseek-ai/dsh-subagent-codex']
+const packages = ['@deepseek-ai/dsh-subagent-codex']
 const built = existsSync(join(root, 'apps/cli/lib/bin.js'))
   && packages.every(name => existsSync(join(root, 'packages/subagent', name.slice('@deepseek-ai/dsh-'.length), 'lib/index.js')))
 
@@ -71,12 +71,12 @@ function pnpmLogTail(profile: string): string {
 }
 
 it.skipIf(!built)('installs the exported registry\'s local closure and switches Official bundles through the generic manager', {
-  // Real packing of two dependency closures, an isolated product installation, and an isolated plugin installation
+  // Real packing of the dependency closure, an isolated product installation, and an isolated plugin installation
   // own this budget; no native model request runs.
   timeout: 900_000,
   retry: 0,
 }, async () => {
-  // The product under test is a real source-independent installation that ships neither provider, so both stay
+  // The product under test is a real source-independent installation that ships no subagent provider, so it stays
   // available to the Official catalog and only the local registry can supply them.
   const fixture = await createPackedInstallation('dsh-official-packed-', [])
   const { temporary, installation, home, profile, environment } = fixture
@@ -92,7 +92,7 @@ it.skipIf(!built)('installs the exported registry\'s local closure and switches 
     root, destination: runDirectory, members: selection.members, release: readReleaseMembers(root),
   })
   const version = artifacts.find(artifact => artifact.name === packages[0])?.version
-  if (version === undefined) throw new Error('the local registry packed no claude-code provider')
+  if (version === undefined) throw new Error('the local registry packed no subagent provider')
   for (const name of packages) expect(artifacts.find(artifact => artifact.name === name), name).toMatchObject({ version })
   await writeRegistryManifest(join(runDirectory, REGISTRY_MANIFEST_FILE), createRegistryManifest({
     buildId: 'packed-e2e',
@@ -125,8 +125,6 @@ it.skipIf(!built)('installs the exported registry\'s local closure and switches 
       packages,
       localDependency: '@deepseek-ai/dsh-brand',
       nativePackages: {
-        // The Agent SDK publishes a musl variant of its Linux artifact, which is what pnpm installs there.
-        '@deepseek-ai/dsh-subagent-claude-code': `@anthropic-ai/claude-agent-sdk-${process.platform}-${process.arch}${hostPlatform().libc?.[0] === 'musl' ? '-musl' : ''}`,
         '@deepseek-ai/dsh-subagent-codex': `@openai/codex-${process.platform}-${process.arch}`,
       },
     },

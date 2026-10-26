@@ -45,22 +45,23 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional, Tuple
 
-__version__ = "1.2.1"
+__version__ = "1.3.0"
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
 #: Node.js engine floor of the repository (package.json "engines.node").
-NODE_MIN = (22, 19, 0)
+NODE_MIN = (24, 9, 0)
 #: npm floor on Astra Linux: the distro ships an npm older than the one the
-#: project toolchain needs.  Node.js 22 bundles npm 10, so the official
-#: NodeSource distribution is required whenever the distro npm is older.
+#: project toolchain needs.  The official Node.js 24 distribution bundles a
+#: current npm, so the NodeSource distribution is required whenever the
+#: distro npm is older.
 ASTRA_NPM_MIN = (10, 0, 0)
 #: pnpm version fallback for the bootstrap stage, used only when no checkout
 #: exists yet (doctor before install).  Once a checkout is present the
 #: repository's own package.json "packageManager" pin wins (``_repo_pnpm_pin``).
-PNPM_VERSION = "11.7.0"
+PNPM_VERSION = "11.28.5"
 #: Default source repository (the Russian-localization fork).
 DEFAULT_REPO = "https://github.com/maksim9510/DeepSeek-Harnes.git"
 #: Branch the fork publishes its synchronized work on.  The fork's checkout
@@ -342,7 +343,7 @@ def detect_platform() -> Platform:
             distro="unknown",
             distro_id="unknown",
             version=platform.release(),
-            node_install_hint="Install Node.js 22.19+ from https://nodejs.org and add it to PATH.",
+            node_install_hint="Install Node.js 24.9+ from https://nodejs.org and add it to PATH.",
         )
 
     os_release = _read_os_release()
@@ -361,7 +362,7 @@ def detect_platform() -> Platform:
             pkg_query=["dpkg", "-s"],
             core_pkgs=["git", "curl", "ca-certificates", "build-essential"],
             node_install_hint=(
-                "Install Node.js 22.19+ from the official NodeSource setup for your release: "
+                "Install Node.js 24.9+ from the official NodeSource setup for your release: "
                 "https://github.com/nodesource/distributions"
             ),
         )
@@ -405,7 +406,7 @@ def detect_platform() -> Platform:
         distro="unknown",
         distro_id=os_release.get("ID", "unknown"),
         version=version,
-        node_install_hint="Install Node.js 22.19+ from https://nodejs.org and add it to PATH.",
+        node_install_hint="Install Node.js 24.9+ from https://nodejs.org and add it to PATH.",
     )
 
 
@@ -780,7 +781,7 @@ class Doctor:
         )
 
     def check_astra_npm(self) -> CheckResult:
-        """Astra Linux ships an npm older than the one Node.js 22 bundles.
+        """Astra Linux ships an npm older than the one Node.js 24 bundles.
 
         The check is a plain version comparison against the npm baseline
         (``ASTRA_NPM_MIN``): when the distro npm is too old, the official
@@ -802,10 +803,10 @@ class Doctor:
         return CheckResult(
             "astra-npm",
             False,
-            detail=f"distro npm {format_version_tuple(npm_version)} is older than npm {format_version_tuple(ASTRA_NPM_MIN)} (the floor bundled with Node.js 22)",
+            detail=f"distro npm {format_version_tuple(npm_version)} is older than npm {format_version_tuple(ASTRA_NPM_MIN)} (the floor bundled with Node.js 24)",
             fix=(
                 "Replace the distro Node.js with the official NodeSource distribution: "
-                "https://github.com/nodesource/distributions (Node.js 22.x), "
+                "https://github.com/nodesource/distributions (Node.js 24.x), "
                 "then re-run doctor."
             ),
         )

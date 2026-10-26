@@ -12,7 +12,7 @@ Documentation: [https://deepseek-harness.github.io/deepseek-harness/](https://de
 
 ## Russian localization
 
-This fork adds a Russian web UI — see the [Russian README](README.md) for details. The localization ships as the language-pack plugin [`@deepseek-ai/dsh-client-locale-ru`](packages/extensions/locale-ru/README.md); the `dsh-client-locale` core is untouched.
+Russian now ships upstream: `dsh-client-locale` registers `ru`, and the client packages carry Russian dictionaries. The fork's language pack is no longer needed and has been removed — after synchronization with upstream the Russian UI is available without extra setup.
 
 ## Web search
 
