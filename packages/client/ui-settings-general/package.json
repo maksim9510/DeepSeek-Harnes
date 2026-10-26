@@ -76,7 +76,7 @@
     "clsx": "^2.0.0",
     "react": "^18.2.0",
     "@deepseek-ai/dsh-settings": "workspace:*",
-    "react-dom": "^18.2.0",
+    "react-dom": "^19.3.0",
     "@deepseek-ai/dsh-client-shortcuts": "workspace:*"
   },
   "files": [
